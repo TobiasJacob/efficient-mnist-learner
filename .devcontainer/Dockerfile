@@ -11,5 +11,5 @@ COPY requirements.txt requirements.txt
 RUN conda install --file requirements.txt
 
 RUN useradd -ms /bin/bash vscode
-# RUN chown -R vscode /opt/conda # TODO
+RUN chown vscode /opt/conda
 USER vscode
