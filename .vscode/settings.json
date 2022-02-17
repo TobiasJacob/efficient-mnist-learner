@@ -2,5 +2,5 @@
     "editor.formatOnSave": true,
     "python.formatting.provider": "black",
     "python.formatting.blackPath": "black",
-    "python.terminal.activateEnvironment": false
+    "python.terminal.activateEnvironment": true
 }
