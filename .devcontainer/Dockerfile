@@ -8,7 +8,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends nodejs
 
 COPY requirements.txt requirements.txt
-RUN conda install --file requirements.txt
+RUN pip install -r requirements.txt
 
 RUN useradd -ms /bin/bash vscode
 RUN chown vscode /opt/conda
