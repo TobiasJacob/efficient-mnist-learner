@@ -36,7 +36,8 @@ def main() -> None:
                     "num_train_labels",
                     "unsupervised_epochs",
                     "classifier_epochs",
-                    "val_acc" "val_f1",
+                    "val_acc",
+                    "val_f1",
                 ],
             )
             print(df)
