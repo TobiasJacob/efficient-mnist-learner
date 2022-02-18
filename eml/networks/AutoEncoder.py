@@ -3,6 +3,8 @@ from typing import List, Tuple
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
+import torchvision
+from torch.utils.tensorboard.writer import SummaryWriter
 
 from eml.networks.Decoder import Decoder
 from eml.networks.Encoder import Encoder
@@ -22,12 +24,32 @@ class AutoEncoder(pl.LightningModule):
         (x, _, _, _) = self.encoder(x)
         return x
 
-    def training_step(self, batch: torch.Tensor, _: torch.Tensor) -> torch.Tensor:
+    def visualize_reconstructions(
+        self, input_imgs: torch.Tensor, reconst_imgs: torch.Tensor
+    ) -> None:
+        imgs = torch.stack([input_imgs, reconst_imgs], dim=1).flatten(0, 1)
+        grid = torchvision.utils.make_grid(
+            imgs[:16], nrow=4, normalize=True, range=(-1, 1)
+        )
+        return grid
+
+    def training_step(
+        self, batch: torch.Tensor, batch_idx: torch.Tensor
+    ) -> torch.Tensor:
         x, y = batch
         z = self.encoder(x)
         x_hat = self.decoder(*z)
         loss = F.mse_loss(x_hat, x)
         self.log("train_loss", loss)
+        if batch_idx % 200 == 0:
+            tensorboard: SummaryWriter = self.logger.experiment
+            grid = self.visualize_reconstructions(x, x_hat)
+            tensorboard.add_image(
+                "reconstructions",
+                grid,
+                self.global_step,
+            )
+
         return loss
 
     def validation_step(self, batch: torch.Tensor, _: torch.Tensor) -> torch.Tensor:
