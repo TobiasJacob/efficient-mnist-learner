@@ -38,7 +38,7 @@ class AutoEncoder(pl.LightningModule):
         z = self.encoder(x)
         x_hat = self.decoder(*z)
         loss = F.mse_loss(x_hat, x)
-        self.log("train_loss", loss)
+        self.log("autoencoder/train_loss", loss)
         if batch_idx % 200 == 0:
             tensorboard: SummaryWriter = self.logger.experiment
             grid = self.visualize_reconstructions(x, x_hat)
@@ -55,7 +55,7 @@ class AutoEncoder(pl.LightningModule):
         z = self.encoder(x)
         x_hat = self.decoder(*z)
         loss = F.mse_loss(x_hat, x)
-        self.log("val_loss", loss)
+        self.log("autoencoder/val_loss", loss)
         if batch_idx % 100 == 0:
             tensorboard: SummaryWriter = self.logger.experiment
             grid = self.visualize_reconstructions(x, x_hat)

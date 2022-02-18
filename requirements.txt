@@ -8,3 +8,4 @@ isort
 # requirements
 hydra-core
 pytorch-lightning
+torchmetrics

@@ -10,6 +10,7 @@ from torchvision import transforms
 from eml.callbacks.VisualizeEmbeddings import VisualizeEmbeddings
 from eml.config import Config
 from eml.networks.AutoEncoder import AutoEncoder
+from eml.networks.Classifier import Classifier
 
 
 @hydra.main(config_path=None)
@@ -37,7 +38,7 @@ def main(cfg: Config) -> None:
     )
 
     auto_encoder = AutoEncoder((28, 28))
-    trainer = pl.Trainer(
+    trainer_autoencoder = pl.Trainer(
         gpus=1 if cfg.device == "cuda" else 0,
         max_epochs=3,
         callbacks=[
@@ -46,7 +47,18 @@ def main(cfg: Config) -> None:
             LearningRateMonitor("epoch"),
         ],
     )
-    trainer.fit(auto_encoder, train_loader, eval_loader)
+    # trainer_autoencoder.fit(auto_encoder, train_loader, eval_loader)
+    classifier = Classifier(auto_encoder)
+    trainer_classifier = pl.Trainer(
+        gpus=1 if cfg.device == "cuda" else 0,
+        max_epochs=3,
+        callbacks=[
+            ModelCheckpoint(save_weights_only=True),
+            LearningRateMonitor("epoch"),
+        ],
+    )
+    classifier.auto_encoder.freeze()
+    trainer_classifier.fit(classifier, train_loader, eval_loader)
 
 
 if __name__ == "__main__":
