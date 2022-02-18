@@ -33,9 +33,7 @@ class AutoEncoder(pl.LightningModule):
         )
         return grid
 
-    def training_step(
-        self, batch: torch.Tensor, batch_idx: torch.Tensor
-    ) -> torch.Tensor:
+    def training_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
         x, y = batch
         z = self.encoder(x)
         x_hat = self.decoder(*z)
@@ -45,19 +43,27 @@ class AutoEncoder(pl.LightningModule):
             tensorboard: SummaryWriter = self.logger.experiment
             grid = self.visualize_reconstructions(x, x_hat)
             tensorboard.add_image(
-                "reconstructions",
+                "train/reconstructions",
                 grid,
                 self.global_step,
             )
 
         return loss
 
-    def validation_step(self, batch: torch.Tensor, _: torch.Tensor) -> torch.Tensor:
+    def validation_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
         x, y = batch
         z = self.encoder(x)
         x_hat = self.decoder(*z)
         loss = F.mse_loss(x_hat, x)
         self.log("val_loss", loss)
+        if batch_idx % 100 == 0:
+            tensorboard: SummaryWriter = self.logger.experiment
+            grid = self.visualize_reconstructions(x, x_hat)
+            tensorboard.add_image(
+                "val/reconstructions",
+                grid,
+                self.global_step,
+            )
         return loss
 
     def configure_optimizers(self):
