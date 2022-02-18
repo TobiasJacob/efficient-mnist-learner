@@ -4,8 +4,10 @@ import hydra
 import pytorch_lightning as pl
 import torch
 import torchvision
+from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from torchvision import transforms
 
+from eml.callbacks.VisualizeEmbeddings import VisualizeEmbeddings
 from eml.config import Config
 from eml.networks.AutoEncoder import AutoEncoder
 
@@ -35,27 +37,16 @@ def main(cfg: Config) -> None:
     )
 
     auto_encoder = AutoEncoder((28, 28))
-    trainer = pl.Trainer(gpus=1 if cfg.device == "cuda" else 0, max_epochs=3)
-    trainer.fit(auto_encoder, train_loader, eval_loader)
-
-    # Visualize embeddings
-    embeddings = []
-    all_imgs = []
-    all_labels = []
-    with torch.no_grad():
-        for imgs, labels in eval_loader:
-            embeddings.append(auto_encoder(imgs))
-            all_imgs.append(imgs)
-            all_labels.append(labels)
-    embeddings = torch.cat(embeddings)
-    all_imgs = torch.cat(all_imgs)
-    all_labels = torch.cat(all_labels)
-
-    trainer.logger.experiment.add_embedding(
-        embeddings,
-        metadata=all_labels,
-        label_img=all_imgs,
+    trainer = pl.Trainer(
+        gpus=1 if cfg.device == "cuda" else 0,
+        max_epochs=3,
+        callbacks=[
+            ModelCheckpoint(save_weights_only=True),
+            VisualizeEmbeddings(num_batches=15),
+            LearningRateMonitor("epoch"),
+        ],
     )
+    trainer.fit(auto_encoder, train_loader, eval_loader)
 
 
 if __name__ == "__main__":
