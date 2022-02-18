@@ -14,7 +14,6 @@ def main() -> None:
     results = []
     cfg = DictConfig(Config())
     data_loaders = load_data(cfg)
-    train(cfg, *data_loaders)
     for num_train_labels in [1000, 5000, 10000, 60000]:
         for unsupervised_epochs in [1, 2, 3, 4, 5]:
             classifier_epochs = 6 - unsupervised_epochs

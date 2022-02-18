@@ -29,7 +29,7 @@ def load_data(cfg: Config) -> Tuple[DataLoader, DataLoader, DataLoader]:
         transform=transforms.Compose([transforms.ToTensor()]),
     )
     eval_loader = torch.utils.data.DataLoader(
-        eval_dataset, shuffle=True, batch_size=cfg.batch_size, num_workers=cfg.workers
+        eval_dataset, shuffle=False, batch_size=cfg.batch_size, num_workers=cfg.workers
     )
     train_dataset_reduced = torch.utils.data.Subset(
         train_dataset_full, torch.arange(0, cfg.num_train_labels)
