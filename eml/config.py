@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import List, Optional
 
 from omegaconf import DictConfig
 
@@ -7,9 +7,16 @@ from omegaconf import DictConfig
 @dataclass
 class Config:
     device: str = "cuda"
-    batch_size: int = 64
-    unsupervised_epochs: int = 5
     workers: int = 16
+    batch_size: int = 64
+
+    num_train_labels: int = 1000
+
+    unsupervised_epochs: int = 5
+    classifier_epochs: int = 2
+
+    lr: float = 1e-3
+    channels: List[int] = [6, 10, 20]
 
 
 def config_description(

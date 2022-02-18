@@ -14,11 +14,13 @@ class AutoEncoder(pl.LightningModule):
     def __init__(
         self,
         image_size: Tuple[int, int],
-        channels: List[int] = [6, 10, 20],
+        lr: float,
+        channels: List[int],
     ) -> None:
         super().__init__()
         self.encoder = Encoder(image_size, channels)
         self.decoder = Decoder(channels)
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         (x, _, _, _) = self.encoder(x)
@@ -67,5 +69,4 @@ class AutoEncoder(pl.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
-        return optimizer
+        return self.optimizer
