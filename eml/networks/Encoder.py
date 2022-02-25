@@ -8,7 +8,8 @@ class Encoder(nn.Module):
     def __init__(
         self,
         image_size: Tuple[int, int],
-        channels: List[int] = [6, 10, 20],
+        num_fc_layers: int,
+        channels: List[int],
     ) -> None:
         super().__init__()
         # Encoder
@@ -24,16 +25,16 @@ class Encoder(nn.Module):
         x = torch.zeros((1, 1, *image_size))
         x = self(x, simulate=True)
         self.fc_size = x.flatten().shape[0]
-        fc_layers = [
-            nn.Linear(self.fc_size, self.fc_size),
-            nn.ReLU(),
-            nn.BatchNorm1d(self.fc_size),
-            nn.Linear(self.fc_size, self.fc_size),
-            nn.ReLU(),
-            nn.BatchNorm1d(self.fc_size),
-            nn.Linear(self.fc_size, self.fc_size),
-        ]
+        assert num_fc_layers >= 2
+        fc_layers = []
+        for _ in range(num_fc_layers - 1):
+            fc_layers.append(nn.Linear(self.fc_size, self.fc_size))
+            fc_layers.append(nn.ReLU())
+            fc_layers.append(nn.BatchNorm1d(self.fc_size))
+        fc_layers.append(nn.Linear(self.fc_size, self.fc_size))
+
         self.fc_layers = nn.ModuleList(fc_layers)
+        print(f"Encoded feature size: {self.fc_size}")
 
     def forward(
         self, x: torch.Tensor, simulate: bool = False

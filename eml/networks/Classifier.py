@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchmetrics.functional import accuracy, f1_score
 
+from eml.config import Config
 from eml.networks.AutoEncoder import AutoEncoder
 
 
@@ -13,25 +14,26 @@ class Classifier(pl.LightningModule):
     def __init__(
         self,
         auto_encoder: AutoEncoder,
-        lr: float,
+        cfg: Config,
         output_classes: int = 10,
     ) -> None:
         super().__init__()
         self.auto_encoder = auto_encoder
-        fc_size = auto_encoder.encoder.fc_size
 
         # Classifier
-        classifier = [
-            nn.Linear(fc_size, fc_size),
-            nn.ReLU(),
-            nn.BatchNorm1d(fc_size),
-            nn.Linear(fc_size, fc_size),
-            nn.ReLU(),
-            nn.BatchNorm1d(fc_size),
-            nn.Linear(fc_size, output_classes),
-        ]
+        classifier = []
+        for i in range(len(cfg.classifier_neurons)):
+            if i == 0:
+                layer_in_neurons = auto_encoder.encoder.fc_size
+            else:
+                layer_in_neurons = cfg.classifier_neurons[i - 1]
+            classifier.append(nn.Linear(layer_in_neurons, cfg.classifier_neurons[i]))
+            classifier.append(nn.ReLU())
+            classifier.append(nn.BatchNorm1d(cfg.classifier_neurons[i]))
+
+        classifier.append(nn.Linear(cfg.classifier_neurons[-1], output_classes))
         self.classifier = nn.ModuleList(classifier)
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=lr)
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=cfg.classifier_lr)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.auto_encoder(x)

@@ -18,12 +18,14 @@ def train(
     eval_loader: DataLoader,
 ) -> None:
     # Logging
-    log_name = config_description(cfg, Config())
+    log_name = config_description(cfg, None)
     print(log_name)
-    logger = TensorBoardLogger(save_dir=os.getcwd(), version=1, name=log_name)
+    logger = TensorBoardLogger(save_dir=os.getcwd(), name=log_name)
 
     # Train autoencoder
-    auto_encoder = AutoEncoder((28, 28), lr=cfg.lr, channels=cfg.channels)
+    auto_encoder = AutoEncoder(
+        cfg=cfg,
+    )
     trainer_autoencoder = pl.Trainer(
         gpus=1 if cfg.device == "cuda" else 0,
         max_epochs=cfg.unsupervised_epochs,
@@ -38,7 +40,7 @@ def train(
     trainer_autoencoder.fit(auto_encoder, train_loader_full, eval_loader)
 
     # Train classifier
-    classifier = Classifier(auto_encoder, lr=cfg.lr)
+    classifier = Classifier(auto_encoder, cfg=cfg)
     trainer_classifier = pl.Trainer(
         gpus=1 if cfg.device == "cuda" else 0,
         max_epochs=cfg.classifier_epochs,

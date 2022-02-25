@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Tuple
 
 import pytorch_lightning as pl
 import torch
@@ -6,6 +6,7 @@ import torch.nn.functional as F
 import torchvision
 from torch.utils.tensorboard.writer import SummaryWriter
 
+from eml.config import Config
 from eml.networks.Decoder import Decoder
 from eml.networks.Encoder import Encoder
 
@@ -13,18 +14,30 @@ from eml.networks.Encoder import Encoder
 class AutoEncoder(pl.LightningModule):
     def __init__(
         self,
-        image_size: Tuple[int, int],
-        lr: float,
-        channels: List[int],
+        cfg: Config,
+        image_size: Tuple[int, int] = (28, 28),
     ) -> None:
         super().__init__()
-        self.encoder = Encoder(image_size, channels)
-        self.decoder = Decoder(channels)
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        self.variational_sigma = cfg.variational_sigma
+        self.encoder = Encoder(
+            image_size, cfg.auto_encoder_fc_layers, cfg.auto_encoder_channels
+        )
+        self.decoder = Decoder(cfg.auto_encoder_channels)
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=cfg.autoencoder_lr)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         (x, _, _, _) = self.encoder(x)
         return x
+
+    def full_forward(self, batch: torch.Tensor) -> torch.Tensor:
+        x, y = batch
+        z, pool_indices, layer_sizes, orig_shape_2d = self.encoder(x)
+        # if this is a variational autoencoder, add noise
+        if self.variational_sigma is not None:
+            z += torch.randn_like(z) * self.variational_sigma
+        x_hat = self.decoder(z, pool_indices, layer_sizes, orig_shape_2d)
+        loss = F.mse_loss(x_hat, x)
+        return loss, x, x_hat
 
     def visualize_reconstructions(
         self, input_imgs: torch.Tensor, reconst_imgs: torch.Tensor
@@ -36,10 +49,7 @@ class AutoEncoder(pl.LightningModule):
         return grid
 
     def training_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
-        x, y = batch
-        z = self.encoder(x)
-        x_hat = self.decoder(*z)
-        loss = F.mse_loss(x_hat, x)
+        loss, x, x_hat = self.full_forward(batch)
         self.log("autoencoder/train_loss", loss)
         if batch_idx % 200 == 0:
             tensorboard: SummaryWriter = self.logger.experiment
@@ -53,10 +63,7 @@ class AutoEncoder(pl.LightningModule):
         return loss
 
     def validation_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
-        x, y = batch
-        z = self.encoder(x)
-        x_hat = self.decoder(*z)
-        loss = F.mse_loss(x_hat, x)
+        loss, x, x_hat = self.full_forward(batch)
         self.log("autoencoder/val_loss", loss)
         if batch_idx % 100 == 0:
             tensorboard: SummaryWriter = self.logger.experiment
