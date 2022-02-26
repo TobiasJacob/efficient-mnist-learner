@@ -20,7 +20,7 @@ This project demonstrates
 - `VS-Code dev container` with CUDA support
 - [Pytorch-Lightning](https://www.pytorchlightning.ai/) for training. It would be possible to use vanilla Pytorch, however, if there exists a framework for it, it's better to use it.
 - [Torchmetrics](https://torchmetrics.readthedocs.io/en/latest/) for calculating accuracy and f1-scores.
-- [https://hydra.cc/](Hydra) for experiment management. All experiments are named according to the deviation from the default configuration.
+- [Hydra](https://hydra.cc/) for experiment management. All experiments are named according to the deviation from the default configuration.
 - [Tensorboard](https://www.tensorflow.org/tensorboard) for advanced visualization of the encoded labels, and training statistics.
     - `Scalars` for training progress
     - `Images` for visualizing the reconstructed images from the autoencoder
@@ -28,7 +28,7 @@ This project demonstrates
 - [Ax](https://ax.dev/) for hyperparameter optimization
 - [flake8](https://flake8.pycqa.org/en/latest/) for linting, [black](https://black.readthedocs.io/en/stable/) for formatting, [isort](https://pycqa.github.io/isort/) for import sorting.
 
-Side Note: Usually, I use poetry or conda as a package manager. However, the NVIDIA-Docker container comes with an existing environment, that suffers from an `InvalidVersionSpec` error. Conda is also incredible slow in this case, therefore I am using `pip install` to add missing dependencies to the Docker-Image. 
+Side Note: Usually, I use poetry or conda as a package manager. However, the NVIDIA-Docker container comes with an existing environment, that suffers from a `InvalidVersionSpec` error. Conda is also incredible slow in this case, therefore I am using `pip install` to add missing dependencies to the Docker Image. 
 
 ```console
 (base) vscode@54a0b6598fe8:/workspaces/efficient-mnist-learner$ conda env export

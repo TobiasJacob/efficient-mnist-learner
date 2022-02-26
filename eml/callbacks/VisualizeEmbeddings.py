@@ -4,13 +4,27 @@ from tqdm import tqdm
 
 
 class VisualizeEmbeddings(pl.Callback):
+    """Pytorch-lightning callback to save the embeddings to Tensorboard"""
+
     def __init__(self, num_batches: int) -> None:
+        """Create a new embedding visualizer.
+
+        Args:
+            num_batches (int): Number of batches used to save embeddings. A large number
+            will generate more embeddings, however, tensorboard will be slower.
+        """
         super().__init__()
         self.num_batches = num_batches
 
     def on_epoch_end(
         self, trainer: "pl.Trainer", auto_encoder: "pl.LightningModule"
     ) -> None:
+        """Run at the end of epoch. Uses the auto_encoder to generate the embeddings.
+
+        Args:
+            trainer (pl.Trainer): The pytorch-ligthning trainer.
+            auto_encoder (pl.LightningModule): The autoencoder.
+        """
         embeddings = []
         all_imgs = []
         all_labels = []
