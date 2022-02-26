@@ -40,13 +40,14 @@ InvalidVersionSpec: Invalid version '1.10.0+cu113<1.11.0': invalid character(s)
 
 Number of training labels | Accuarcy on validation
 --- | --- 
-500 | 81.91%
-1000 | 82.04%
-2000 | 83.85%
-5000 | 84.95%
-10000 | 87.01%
-60000 | 90.81%
-
+500 | 82.22%
+1000 | 83.09%
+2000 | 84.49%
+5000 | 85.22%
+10000 | 87.91%
+20000 | 89.02%
+30000 | 89.48%
+60000 | 91.14%
 
 ## Setup GPU (tested on Ubuntu)
 
