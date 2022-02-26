@@ -1,4 +1,5 @@
 import os
+from typing import Dict
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
@@ -16,11 +17,11 @@ def train(
     train_loader_full: DataLoader,
     train_loader_reduced: DataLoader,
     eval_loader: DataLoader,
-) -> None:
+) -> Dict:
     # Logging
     log_name = config_description(cfg, None)
     print(log_name)
-    logger = TensorBoardLogger(save_dir=os.getcwd(), name=log_name)
+    logger = TensorBoardLogger(save_dir=os.getcwd(), version=log_name)
 
     # Train autoencoder
     auto_encoder = AutoEncoder(
@@ -53,4 +54,6 @@ def train(
     )
     trainer_classifier.fit(classifier, train_loader_reduced, eval_loader)
     result = trainer_classifier.validate(classifier, eval_loader)[0]
+    with open(f"{log_name}-result.txt", "w") as f:
+        f.write(str(result))
     return result

@@ -7,5 +7,7 @@ isort
 
 # requirements
 hydra-core
+ax-platform
+hydra-ax-sweeper
 pytorch-lightning
 torchmetrics

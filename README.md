@@ -11,8 +11,13 @@ This project demonstrates
 - `Convolutional variational autoencoder` in Pytorch
 - `VS-Code dev container` with CUDA support
 - `Pytorch-Lightning` for training. It would be possible to use vanilla Pytorch, however, if there exists a framework for it, it's better to use it.
+- `Torchmetrics` for calculating accuracy and f1-scores.
 - `Hydra` for experiment management. All experiments are named according to the deviation from the default configuration.
 - `Tensorboard` for advanced visualization of the encoded labels, and training statistics.
+    - `Scalars` for training progress
+    - `Images` for visualizing the reconstructed images from the autoencoder
+    - `Projector` for visualizing the embeddings
+- `Ax` for hyperparameter optimization
 
 Side Note: Usually, I use poetry or conda as a package manager. However, the NVIDIA-Docker container comes with an existing environment, that suffers from an `InvalidVersionSpec` error. Conda is also incredible slow in this case, therefore I am using `pip install` to add missing dependencies to the Docker-Image. 
 
