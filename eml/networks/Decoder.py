@@ -11,6 +11,8 @@ class Decoder(nn.Module):
 
     def __init__(
         self,
+        fc_size: int,
+        num_fc_layers: int,
         channels: List[int] = [6, 10, 20],
     ) -> None:
         """Creates a new Decoder Module.
@@ -20,6 +22,18 @@ class Decoder(nn.Module):
             Defaults to [6, 10, 20].
         """
         super().__init__()
+
+        # Fully connected part
+        fc_layers = []
+        for _ in range(num_fc_layers - 1):
+            fc_layers.append(nn.Linear(fc_size, fc_size))
+            fc_layers.append(nn.ReLU())
+            fc_layers.append(nn.BatchNorm1d(fc_size))
+        if num_fc_layers > 0:
+            fc_layers.append(nn.Linear(fc_size, fc_size))
+
+        self.fc_layers = nn.ModuleList(fc_layers)
+
         decoder = []
         for i in reversed(range(len(channels))):
             out_features = 1 if i == 0 else channels[i - 1]
@@ -40,7 +54,7 @@ class Decoder(nn.Module):
         """Applies the foward pass.
 
         Args:
-            x (torch.Tensor): The embedded features. Shape: (batch_size, self.fc_size)
+            x (torch.Tensor): The embedded features. Shape: (batch_size, fc_size)
             pool_indices (List[torch.Tensor]): The pooling indices from the Encoder.
             layer_sizes (List[torch.Tensor]): The layer sizes from the Encoder.
             orig_shape_2d (torch.Tensor): The unflattened feature shape from the
@@ -49,6 +63,8 @@ class Decoder(nn.Module):
         Returns:
             torch.Tensor: The reconstructed images
         """
+        for layer in self.fc_layers:
+            x = layer(x)
         x = x.reshape(orig_shape_2d)
         for layer in self.decoder:
             if type(layer) is nn.MaxUnpool2d:

@@ -14,7 +14,7 @@ def main() -> None:
     os.chdir("eval")
     results = []
     cfg = DictConfig(Config())
-    for num_train_labels in [500, 1000, 2000, 5000, 10000, 60000]:
+    for num_train_labels in [500, 1000, 2000, 5000, 10000, 20000, 30000, 60000]:
         cfg.num_train_labels = num_train_labels
         data_loaders = load_data(cfg)
         for variational_sigma in [0.01]:

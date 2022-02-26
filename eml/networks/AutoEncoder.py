@@ -30,7 +30,11 @@ class AutoEncoder(pl.LightningModule):
         self.encoder = Encoder(
             image_size, cfg.auto_encoder_fc_layers, cfg.auto_encoder_channels
         )
-        self.decoder = Decoder(cfg.auto_encoder_channels)
+        self.decoder = Decoder(
+            self.encoder.fc_size,
+            cfg.auto_encoder_fc_layers,
+            cfg.auto_encoder_channels,
+        )
         self.optimizer = torch.optim.Adam(self.parameters(), lr=cfg.autoencoder_lr)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

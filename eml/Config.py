@@ -30,7 +30,7 @@ class Config:
     # Channel size for the images in the encoder part.
     auto_encoder_channels: List[int] = field(default_factory=lambda: [16, 32])
     # Number of fully connected layers in the encoder.
-    auto_encoder_fc_layers: int = 2
+    auto_encoder_fc_layers: int = 1
     # Number of neurons per layer in the classification head.
     classifier_neurons: List[int] = field(default_factory=lambda: [256, 128, 64])
     # Sigma used for normal distribution in the variational autoencoder.
