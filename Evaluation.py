@@ -19,7 +19,7 @@ def main() -> None:
         data_loaders = load_data(cfg)
         for variational_sigma in [0.01]:
             for unsupervised_epochs in [7]:
-                classifier_epochs = 25000 // num_train_labels + 7
+                classifier_epochs = 25000 // num_train_labels + 10
                 cfg.unsupervised_epochs = unsupervised_epochs
                 cfg.classifier_epochs = classifier_epochs
                 cfg.variational_sigma = variational_sigma
