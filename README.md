@@ -4,9 +4,15 @@
 
 **Approach**: Use a variational autoencoder for unsupervised training on the full unlabeled dataset. Then train the classifier on the encodings of the autoencoder.
 
-### Features
+### Demo
 
+The encoded features:
 ![Demo video](docs/TSNEDemo.gif)
+
+The images after reconstruction through the variational autoencoder:
+![Reconstruction Demo](docs/ReconstructionDemo.png)
+
+### Features
 
 This project demonstrates
 
@@ -30,9 +36,29 @@ Side Note: Usually, I use poetry or conda as a package manager. However, the NVI
 InvalidVersionSpec: Invalid version '1.10.0+cu113<1.11.0': invalid character(s)
 ```
 
+### Evaluation results
+
+Number of training labels | Accuarcy on validation
+--- | --- 
+500 | 81.91%
+1000 | 82.04%
+2000 | 83.85%
+5000 | 84.95%
+10000 | 87.01%
+60000 | 90.81%
+
+
 ## Setup GPU (tested on Ubuntu)
 
 Open the project in the VS-Code dev container. Select the `base` conda environment that ships with the container. This is tested on CUDA Version 11.4, Ubuntu 20.04 LTS.
+
+If you don't want to use VS-Code, you can run it in docker as well.
+
+```console
+cp requirements.txt .devcontainer/
+docker build .devcontainer/ -t devcontainer
+docker run --rm -it -v $(pwd):/workspace devcontainer bash
+```
 
 ## Usage
 
@@ -48,18 +74,12 @@ Parameters can be overwritten the following way:
 python -m eml variational_sigma=0.001 unsupervised_epochs=10 classifier_epochs=10
 ```
 
-Hydra allows for parameter sweeps like this:
-
-```console
-python -m eml variational_sigma=0.001,0.01,0.1 unsupervised_epochs=10 classifier_epochs=10
-```
-
 More details can be found on the Hydra documentation. All configuration options are described in the [Config.py](eml/Config.py) file.
 
 The hyperparameter tuning is in the [Hyperopt](Hyperopt.ipynb) notebook.
 
-## For t-sne: Use this
+The validation results were generated with the [Evaluation.py](Evaluation.py) script.
 
-Perplexity: 76
-LR: 0.1
-Supervise: 0
+```console
+python Evaluation.py
+```
