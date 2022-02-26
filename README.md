@@ -6,7 +6,7 @@
 
 ### Features
 
-![Demo video](docs/TSNEDemo.mp4)
+![Demo video](docs/TSNEDemo.gif)
 
 This project demonstrates
 
