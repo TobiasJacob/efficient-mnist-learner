@@ -3,9 +3,9 @@ import os
 import pandas as pd
 from omegaconf import DictConfig
 
-from eml.config import Config
+from eml.Config import Config
 from eml.Datasets import load_data
-from eml.train import train
+from eml.Train import train
 
 
 def main() -> None:

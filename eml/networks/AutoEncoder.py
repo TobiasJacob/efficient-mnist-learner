@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import torchvision
 from torch.utils.tensorboard.writer import SummaryWriter
 
-from eml.config import Config
+from eml.Config import Config
 from eml.networks.Decoder import Decoder
 from eml.networks.Encoder import Encoder
 

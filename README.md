@@ -10,16 +10,17 @@
 
 This project demonstrates
 
-- `Convolutional variational autoencoder` in Pytorch
+- `Convolutional variational autoencoder` in [Pytorch](https://pytorch.org/)
 - `VS-Code dev container` with CUDA support
-- `Pytorch-Lightning` for training. It would be possible to use vanilla Pytorch, however, if there exists a framework for it, it's better to use it.
-- `Torchmetrics` for calculating accuracy and f1-scores.
-- `Hydra` for experiment management. All experiments are named according to the deviation from the default configuration.
-- `Tensorboard` for advanced visualization of the encoded labels, and training statistics.
+- [Pytorch-Lightning](https://www.pytorchlightning.ai/) for training. It would be possible to use vanilla Pytorch, however, if there exists a framework for it, it's better to use it.
+- [Torchmetrics](https://torchmetrics.readthedocs.io/en/latest/) for calculating accuracy and f1-scores.
+- [https://hydra.cc/](Hydra) for experiment management. All experiments are named according to the deviation from the default configuration.
+- [Tensorboard](https://www.tensorflow.org/tensorboard) for advanced visualization of the encoded labels, and training statistics.
     - `Scalars` for training progress
     - `Images` for visualizing the reconstructed images from the autoencoder
     - `Projector` for visualizing the embeddings
-- `Ax` for hyperparameter optimization
+- [Ax](https://ax.dev/) for hyperparameter optimization
+- [flake8](https://flake8.pycqa.org/en/latest/) for linting, [black](https://black.readthedocs.io/en/stable/) for formatting, [isort](https://pycqa.github.io/isort/) for import sorting.
 
 Side Note: Usually, I use poetry or conda as a package manager. However, the NVIDIA-Docker container comes with an existing environment, that suffers from an `InvalidVersionSpec` error. Conda is also incredible slow in this case, therefore I am using `pip install` to add missing dependencies to the Docker-Image. 
 
@@ -35,12 +36,27 @@ Open the project in the VS-Code dev container. Select the `base` conda environme
 
 ## Usage
 
-You can use any 
+You can run an experiment using the command line.
 
 ```console
-python -m eml 
-
+python -m eml
 ```
+
+Parameters can be overwritten the following way:
+
+```console
+python -m eml variational_sigma=0.001 unsupervised_epochs=10 classifier_epochs=10
+```
+
+Hydra allows for parameter sweeps like this:
+
+```console
+python -m eml variational_sigma=0.001,0.01,0.1 unsupervised_epochs=10 classifier_epochs=10
+```
+
+More details can be found on the Hydra documentation. All configuration options are described in the [Config.py](eml/Config.py) file.
+
+The hyperparameter tuning is in the [Hyperopt](Hyperopt.ipynb) notebook.
 
 ## For t-sne: Use this
 

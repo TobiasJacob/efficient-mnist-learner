@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchmetrics.functional import accuracy, f1_score
 
-from eml.config import Config
+from eml.Config import Config
 from eml.networks.AutoEncoder import AutoEncoder
 
 

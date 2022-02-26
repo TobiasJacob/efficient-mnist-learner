@@ -6,7 +6,7 @@ import torchvision
 from torch.utils.data.dataloader import DataLoader
 from torchvision import transforms
 
-from eml.config import Config
+from eml.Config import Config
 
 
 def load_data(cfg: Config) -> Tuple[DataLoader, DataLoader, DataLoader]:

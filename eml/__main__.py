@@ -1,9 +1,9 @@
 import hydra
 from hydra.core.config_store import ConfigStore
 
-from eml.config import Config
+from eml.Config import Config
 from eml.Datasets import load_data
-from eml.train import train
+from eml.Train import train
 
 cs = ConfigStore.instance()
 cs.store(name="config", node=Config)

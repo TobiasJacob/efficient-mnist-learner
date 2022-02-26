@@ -7,7 +7,7 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from torch.utils.data.dataloader import DataLoader
 
 from eml.callbacks.VisualizeEmbeddings import VisualizeEmbeddings
-from eml.config import Config, config_description
+from eml.Config import Config, config_description
 from eml.networks.AutoEncoder import AutoEncoder
 from eml.networks.Classifier import Classifier
 
