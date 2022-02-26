@@ -43,6 +43,7 @@ class Classifier(pl.LightningModule):
             classifier.append(nn.Linear(layer_in_neurons, cfg.classifier_neurons[i]))
             classifier.append(nn.ReLU())
             classifier.append(nn.BatchNorm1d(cfg.classifier_neurons[i]))
+            classifier.append(nn.Dropout(cfg.dropout_p))
 
         classifier.append(nn.Linear(cfg.classifier_neurons[-1], output_classes))
         self.classifier = nn.ModuleList(classifier)

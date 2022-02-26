@@ -13,13 +13,14 @@ class Decoder(nn.Module):
         self,
         fc_size: int,
         num_fc_layers: int,
-        channels: List[int] = [6, 10, 20],
+        channels: List[int],
+        dropout_p: float,
     ) -> None:
         """Creates a new Decoder Module.
 
         Args:
             channels (List[int], optional): The channel sizes for the convolutions.
-            Defaults to [6, 10, 20].
+            dropout_p (float): Probability for dropout layer.
         """
         super().__init__()
 
@@ -29,6 +30,7 @@ class Decoder(nn.Module):
             fc_layers.append(nn.Linear(fc_size, fc_size))
             fc_layers.append(nn.ReLU())
             fc_layers.append(nn.BatchNorm1d(fc_size))
+            fc_layers.append(nn.Dropout(dropout_p))
         if num_fc_layers > 0:
             fc_layers.append(nn.Linear(fc_size, fc_size))
 
@@ -42,6 +44,7 @@ class Decoder(nn.Module):
             if i != 0:
                 decoder.append(nn.ReLU())
                 decoder.append(nn.BatchNorm2d(out_features))
+                decoder.append(nn.Dropout2d(dropout_p))
         self.decoder = nn.ModuleList(decoder)
 
     def forward(

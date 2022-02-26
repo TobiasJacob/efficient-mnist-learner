@@ -28,12 +28,16 @@ class AutoEncoder(pl.LightningModule):
         super().__init__()
         self.variational_sigma = cfg.variational_sigma
         self.encoder = Encoder(
-            image_size, cfg.auto_encoder_fc_layers, cfg.auto_encoder_channels
+            image_size,
+            cfg.auto_encoder_fc_layers,
+            cfg.auto_encoder_channels,
+            cfg.dropout_p,
         )
         self.decoder = Decoder(
             self.encoder.fc_size,
             cfg.auto_encoder_fc_layers,
             cfg.auto_encoder_channels,
+            cfg.dropout_p,
         )
         self.optimizer = torch.optim.Adam(self.parameters(), lr=cfg.autoencoder_lr)
 

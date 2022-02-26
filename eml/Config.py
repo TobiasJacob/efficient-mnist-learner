@@ -36,6 +36,8 @@ class Config:
     # Sigma used for normal distribution in the variational autoencoder.
     # None does not add noise in the autoencoder.
     variational_sigma: Optional[float] = 0.01
+    # Probability for dropout layer
+    dropout_p: float = 0.2
 
 
 def config_description(

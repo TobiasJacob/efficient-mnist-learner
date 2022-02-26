@@ -12,6 +12,7 @@ class Encoder(nn.Module):
         image_size: Tuple[int, int],
         num_fc_layers: int,
         channels: List[int],
+        dropout_p: float,
     ) -> None:
         """Creates a new encoder module. The encoder applies convolutions and
         max-pooling first. Then, the features are flattend and processed with
@@ -21,6 +22,7 @@ class Encoder(nn.Module):
             image_size (Tuple[int, int]): The size of the input image.
             num_fc_layers (int): Number of fully connected layers after flattening.
             channels (List[int]): Channel size of the convolutional layers.
+            dropout_p (float): Probability for dropout layer.
         """
         super().__init__()
         # Down convolutions
@@ -29,6 +31,7 @@ class Encoder(nn.Module):
             encoder.append(nn.Conv2d(1 if i == 0 else channels[i - 1], channels[i], 3))
             encoder.append(nn.ReLU())
             encoder.append(nn.BatchNorm2d(channels[i]))
+            encoder.append(nn.Dropout2d(dropout_p))
             encoder.append(nn.MaxPool2d((2, 2), return_indices=True))
         self.encoder = nn.ModuleList(encoder)
 
@@ -41,6 +44,7 @@ class Encoder(nn.Module):
             fc_layers.append(nn.Linear(self.fc_size, self.fc_size))
             fc_layers.append(nn.ReLU())
             fc_layers.append(nn.BatchNorm1d(self.fc_size))
+            fc_layers.append(nn.Dropout(dropout_p))
         if num_fc_layers > 0:
             fc_layers.append(nn.Linear(self.fc_size, self.fc_size))
 
