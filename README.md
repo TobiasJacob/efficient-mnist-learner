@@ -6,6 +6,8 @@
 
 ### Features
 
+![Demo video](docs/TSNEDemo.mp4)
+
 This project demonstrates
 
 - `Convolutional variational autoencoder` in Pytorch
