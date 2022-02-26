@@ -7,7 +7,7 @@ from omegaconf import DictConfig
 @dataclass
 class Config:
     unsupervised_epochs: int = 10
-    classifier_epochs: int = 5
+    classifier_epochs: int = 10
 
     device: str = "cuda"
     workers: int = 4
@@ -18,16 +18,16 @@ class Config:
     autoencoder_lr: float = 1e-3
     classifier_lr: float = 1e-3
     auto_encoder_channels: List[int] = field(default_factory=lambda: [16, 32])
-    auto_encoder_fc_layers: int = 3
+    auto_encoder_fc_layers: int = 2
     classifier_neurons: List[int] = field(default_factory=lambda: [256, 128, 64])
-    variational_sigma: Optional[float] = 0.1
+    variational_sigma: Optional[float] = 0.0025
 
 
 def config_description(
     current_config: DictConfig, default_config: Optional[Config] = None
 ) -> str:
     if default_config is None:
-        default_config = Config(None, None)
+        default_config = Config()
     desc = ""
 
     for fld, val in current_config.items():
