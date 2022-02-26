@@ -18,9 +18,9 @@ class Encoder(nn.Module):
         fully connected layers.
 
         Args:
-            image_size (Tuple[int, int]): The size of the input image
-            num_fc_layers (int): Number of fully connected layers after flattening
-            channels (List[int]): Channel size of the convolutional layers
+            image_size (Tuple[int, int]): The size of the input image.
+            num_fc_layers (int): Number of fully connected layers after flattening.
+            channels (List[int]): Channel size of the convolutional layers.
         """
         super().__init__()
         # Down convolutions
@@ -56,13 +56,14 @@ class Encoder(nn.Module):
         fully connected layers.
 
         Args:
-            x (torch.Tensor): The images to encode. Shape: (batch_size, width, height)
+            x (torch.Tensor): The images to encode. Shape: (batch_size, width, height).
             simulate (bool, optional): Simulation mode active. Defaults to False.
 
         Returns:
             Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Returns a
             tuple containing the encoded features, the pooling indices, the layer sizes
             and the unflattend 2d shape for the decoder.
+                Encoded feature shape: (batch_size, self.fc_size)
         """
         # Apply down convolutions
         pool_indices = []

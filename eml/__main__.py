@@ -11,6 +11,11 @@ cs.store(name="config", node=Config)
 
 @hydra.main(config_path=None, config_name="config")
 def main(cfg: Config) -> None:
+    """Runs a single experiment with a configuration.
+
+    Args:
+        cfg (Config): The experiment configuration.
+    """
     data_loaders = load_data(cfg)
     train(cfg, *data_loaders)
 

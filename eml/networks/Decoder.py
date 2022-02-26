@@ -5,10 +5,20 @@ import torch.nn as nn
 
 
 class Decoder(nn.Module):
+    """Generates images from a feature vector using unflattening and transpoed
+    convolutions.
+    """
+
     def __init__(
         self,
         channels: List[int] = [6, 10, 20],
     ) -> None:
+        """Creates a new Decoder Module.
+
+        Args:
+            channels (List[int], optional): The channel sizes for the convolutions.
+            Defaults to [6, 10, 20].
+        """
         super().__init__()
         decoder = []
         for i in reversed(range(len(channels))):
@@ -27,6 +37,18 @@ class Decoder(nn.Module):
         layer_sizes: List[torch.Tensor],
         orig_shape_2d: torch.Tensor,
     ) -> torch.Tensor:
+        """Applies the foward pass.
+
+        Args:
+            x (torch.Tensor): The embedded features. Shape: (batch_size, self.fc_size)
+            pool_indices (List[torch.Tensor]): The pooling indices from the Encoder.
+            layer_sizes (List[torch.Tensor]): The layer sizes from the Encoder.
+            orig_shape_2d (torch.Tensor): The unflattened feature shape from the
+                Encoder.
+
+        Returns:
+            torch.Tensor: The reconstructed images
+        """
         x = x.reshape(orig_shape_2d)
         for layer in self.decoder:
             if type(layer) is nn.MaxUnpool2d:

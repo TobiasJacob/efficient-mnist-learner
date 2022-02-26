@@ -10,6 +10,19 @@ from eml.Config import Config
 
 
 def load_data(cfg: Config) -> Tuple[DataLoader, DataLoader, DataLoader]:
+    """Helper method to create all the dataloaders
+
+    Args:
+        cfg (Config): The global config object
+
+    Returns:
+        Tuple[DataLoader, DataLoader, DataLoader]: Returns three dataloaders:
+                - The train data loader with all images(+labels) for the autoencoder.
+                    It does contain the images as well, but they are not used by the
+                    autoencoder.
+                - The smaller train data loader with images+labels for the classifier.
+                - The evaluation data loader with images+labels.
+    """
     train_dataset_full = torchvision.datasets.FashionMNIST(
         os.path.expanduser("~/dataset"),
         train=True,
