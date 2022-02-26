@@ -49,6 +49,8 @@ Number of training labels | Accuarcy on validation
 30000 | 89.48%
 60000 | 91.14%
 
+The auto-encoder results in a boost of 2-3% over a model which has not been pre-trained on the whole dataset.
+
 ## Setup GPU (tested on Ubuntu)
 
 Open the project in the VS-Code dev container. Select the `base` conda environment that ships with the container. This is tested on CUDA Version 11.4, Ubuntu 20.04 LTS.
