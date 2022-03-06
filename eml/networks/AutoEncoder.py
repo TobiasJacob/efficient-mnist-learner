@@ -9,6 +9,7 @@ from torch.utils.tensorboard.writer import SummaryWriter
 from eml.Config import Config
 from eml.networks.Decoder import Decoder
 from eml.networks.Encoder import Encoder
+from eml.sam.step_lr import StepLR
 
 
 class AutoEncoder(pl.LightningModule):
@@ -26,6 +27,7 @@ class AutoEncoder(pl.LightningModule):
             image_size (Tuple[int, int], optional): Image size. Defaults to (28, 28).
         """
         super().__init__()
+        self.cfg = cfg
         self.variational_sigma = cfg.variational_sigma
         self.encoder = Encoder(
             image_size,
@@ -115,6 +117,7 @@ class AutoEncoder(pl.LightningModule):
         """
         loss, x, x_hat = self.full_forward(batch)
         self.log("autoencoder/train_loss", loss)
+        self.log("autoencoder/lr", self.optimizer.param_groups[0]["lr"])
         if batch_idx % 200 == 0:
             tensorboard: SummaryWriter = self.logger.experiment
             grid = self.visualize_reconstructions(x, x_hat)
@@ -157,4 +160,10 @@ class AutoEncoder(pl.LightningModule):
         Returns:
             torch.optim.Optimizer: The optimizer for this network.
         """
-        return self.optimizer
+        lr_scheduler = StepLR(
+            self.optimizer, self.cfg.autoencoder_lr, self.cfg.unsupervised_epochs
+        )
+        return {
+            "optimizer": self.optimizer,
+            "lr_scheduler": lr_scheduler,
+        }

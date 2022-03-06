@@ -33,6 +33,7 @@ def train(
     """
     # Logging
     log_name = config_description(cfg, None)
+    full_log_name = config_description(cfg, None, False)
     print(log_name)
     logger = TensorBoardLogger(save_dir=os.getcwd(), version=log_name)
 
@@ -70,5 +71,5 @@ def train(
     # Validate
     result = trainer_classifier.validate(classifier, eval_loader)[0]
     with open(f"{log_name}-result.txt", "w") as f:
-        f.write(str(result))
+        f.write(full_log_name + "\n" + str(result) + "\n")
     return result

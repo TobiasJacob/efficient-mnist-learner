@@ -27,6 +27,8 @@ class Config:
     autoencoder_lr: float = 1e-3
     # Learning rate for the classifier
     classifier_lr: float = 1e-3
+    # Learning rate for the autoencoder during classifier trainig
+    classifier_lr_autoenc: float = 1e-4
     # Channel size for the images in the encoder part.
     auto_encoder_channels: List[int] = field(default_factory=lambda: [16, 32])
     # Autoencoder encoded feature size
@@ -45,7 +47,9 @@ class Config:
 
 
 def config_description(
-    current_config: DictConfig, default_config: Optional[Config] = None
+    current_config: DictConfig,
+    default_config: Optional[Config] = None,
+    truncate: bool = True,
 ) -> str:
     """Helper method that generates a decription from a config object.
     The description shows all the values that differ from the default config.
@@ -65,9 +69,13 @@ def config_description(
 
     for fld, val in current_config.items():
         default_value = getattr(default_config, fld)
-        if val != default_value:
-            desc += f" {fld}={val}"
         if type(val) == DictConfig:
             desc += f" {config_description(val, default_value)}"
+        elif type(val) == float:
+            desc += f" {fld}={val:1.2}"
+        elif val != default_value:
+            desc += f" {fld}={val}"
 
+    if truncate:
+        return desc.strip()[0:50]
     return desc.strip()

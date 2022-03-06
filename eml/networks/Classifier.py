@@ -9,6 +9,7 @@ from torchmetrics.functional import accuracy, f1_score
 from eml.Config import Config
 from eml.networks.AutoEncoder import AutoEncoder
 from eml.networks.FCUnit import FCUnit
+from eml.sam.step_lr import StepLR
 
 
 class Classifier(pl.LightningModule):
@@ -33,6 +34,7 @@ class Classifier(pl.LightningModule):
         """
         super().__init__()
         self.auto_encoder = auto_encoder
+        self.cfg = cfg
 
         # Classifier
         fc_size = cfg.autoencoder_features
@@ -42,7 +44,13 @@ class Classifier(pl.LightningModule):
 
         classifier.append(nn.Linear(fc_size, output_classes))
         self.classifier = nn.Sequential(*classifier)
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=cfg.classifier_lr)
+        self.optimizer_auto_encoder = torch.optim.Adam(
+            self.auto_encoder.parameters(), lr=cfg.classifier_lr_autoenc
+        )
+        self.optimizer_classifier = torch.optim.Adam(
+            self.classifier.parameters(), lr=cfg.classifier_lr
+        )
+        self.automatic_optimization = False
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Applies the forward pass, which inclused encoding and classifying the images.
@@ -59,7 +67,9 @@ class Classifier(pl.LightningModule):
         return x
 
     def training_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
+        self,
+        batch: Tuple[torch.Tensor, torch.Tensor],
+        batch_idx: int,
     ) -> torch.Tensor:
         """Runs the forward pass and calculates the loss for a training sample.
         The full forward pass includes encoding and classifing the images.
@@ -74,14 +84,22 @@ class Classifier(pl.LightningModule):
         """
         x, y = batch
         x = self.auto_encoder(x)
-        for layer in self.classifier:
-            x = layer(x)
+        x = self.classifier(x)
         preds = torch.argmax(x, dim=-1)
         loss = F.cross_entropy(x, y)
         self.log("classifier/train_loss", loss)
         self.log("classifier/train_acc", accuracy(preds, y))
         self.log("classifier/train_f1", f1_score(preds, y, num_classes=10))
-        return loss
+        self.log(
+            "classifier/lr_autoenc", self.optimizer_auto_encoder.param_groups[0]["lr"]
+        )
+        self.log("classifier/lr_clas", self.optimizer_classifier.param_groups[0]["lr"])
+
+        self.optimizer_auto_encoder.zero_grad()
+        self.optimizer_classifier.zero_grad()
+        loss.backward()
+        self.optimizer_auto_encoder.step()
+        self.optimizer_classifier.step()
 
     def validation_step(
         self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
@@ -99,8 +117,7 @@ class Classifier(pl.LightningModule):
         """
         x, y = batch
         x = self.auto_encoder(x)
-        for layer in self.classifier:
-            x = layer(x)
+        x = self.classifier(x)
         preds = torch.argmax(x, dim=-1)
         loss = F.cross_entropy(x, y)
         self.log("classifier/val_loss", loss)
@@ -114,4 +131,23 @@ class Classifier(pl.LightningModule):
         Returns:
             torch.optim.Optimizer: The optimizer for this network.
         """
-        return self.optimizer
+        lr_scheduler_auto_encoder = StepLR(
+            self.optimizer_auto_encoder,
+            self.cfg.classifier_lr_autoenc,
+            self.cfg.classifier_epochs,
+        )
+        lr_scheduler_classifier = StepLR(
+            self.optimizer_classifier,
+            self.cfg.classifier_lr,
+            self.cfg.classifier_epochs,
+        )
+        return [
+            {
+                "optimizer": self.optimizer_auto_encoder,
+                "lr_scheduler": lr_scheduler_auto_encoder,
+            },
+            {
+                "optimizer": self.optimizer_classifier,
+                "lr_scheduler": lr_scheduler_classifier,
+            },
+        ]
