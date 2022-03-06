@@ -22,6 +22,7 @@ class Decoder(nn.Module):
         dropout_p: float,
         depth: int,
         non_linearity: Type,
+        stride: int,
     ) -> None:
         """Creates a new Decoder Module.
 
@@ -45,7 +46,9 @@ class Decoder(nn.Module):
             for _ in range(depth):
                 decoder.append(BasicUnit(channels[i], dropout_p, non_linearity))
             decoder.append(
-                UpsampleUnit(channels[i], out_features, 3, dropout_p, non_linearity)
+                UpsampleUnit(
+                    channels[i], out_features, stride, dropout_p, non_linearity
+                )
             )
         self.decoder = nn.Sequential(*decoder)
 

@@ -39,6 +39,7 @@ class AutoEncoder(pl.LightningModule):
             cfg.auto_encoder_depth,
             cfg.autoencoder_features,
             get_non_linearity(cfg),
+            cfg.autoencoder_stride,
         )
         self.decoder = Decoder(
             cfg.autoencoder_features,
@@ -48,6 +49,7 @@ class AutoEncoder(pl.LightningModule):
             cfg.dropout_p,
             cfg.auto_encoder_depth,
             get_non_linearity(cfg),
+            cfg.autoencoder_stride,
         )
 
         if cfg.use_sam:
@@ -94,6 +96,8 @@ class AutoEncoder(pl.LightningModule):
             torch.Tensor: The reconstructed images after being processed by the
             autoencoder. Shape: (batch_size, width, height)
         """
+        if self.cfg.autoencoder_stride != 3:
+            return None
         x, y = batch
         z, orig_shape_2d = self.encoder(x)
         # if this is a variational autoencoder, add noise
@@ -137,6 +141,8 @@ class AutoEncoder(pl.LightningModule):
         Returns:
             torch.Tensor: The loss for this training sample. Shape: (1)
         """
+        if self.cfg.autoencoder_stride != 3:
+            return None
         loss, x, x_hat = self.full_forward(batch)
         if self.cfg.use_sam:
             loss.backward()
@@ -178,6 +184,8 @@ class AutoEncoder(pl.LightningModule):
         Returns:
             torch.Tensor: The loss for this validation sample.
         """
+        if self.cfg.autoencoder_stride != 3:
+            return None
         loss, x, x_hat = self.full_forward(batch)
         self.log("autoencoder/val_loss", loss)
         if batch_idx % 100 == 0:

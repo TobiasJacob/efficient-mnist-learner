@@ -20,6 +20,7 @@ class Encoder(nn.Module):
         depth: int,
         encoded_feature_size: int,
         non_linearity: Type,
+        stride: int,
     ) -> None:
         """Creates a new encoder module. The encoder applies convolutions and
         max-pooling first. Then, the features are flattend and processed with
@@ -39,7 +40,9 @@ class Encoder(nn.Module):
             for _ in range(depth):
                 encoder.append(BasicUnit(in_channels, dropout_p, non_linearity))
             encoder.append(
-                DownsampleUnit(in_channels, channels[i], 3, dropout_p, non_linearity)
+                DownsampleUnit(
+                    in_channels, channels[i], stride, dropout_p, non_linearity
+                )
             )
         self.encoder = nn.Sequential(*encoder)
 
