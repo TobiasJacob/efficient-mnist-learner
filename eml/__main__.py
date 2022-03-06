@@ -17,6 +17,7 @@ def main(cfg: Config) -> None:
         cfg (Config): The experiment configuration.
     """
     data_loaders = load_data(cfg)
+
     train(cfg, *data_loaders)
 
 

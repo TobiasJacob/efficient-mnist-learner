@@ -8,6 +8,7 @@ from torchmetrics.functional import accuracy, f1_score
 
 from eml.Config import Config
 from eml.networks.AutoEncoder import AutoEncoder
+from eml.networks.FCUnit import FCUnit
 
 
 class Classifier(pl.LightningModule):
@@ -34,19 +35,13 @@ class Classifier(pl.LightningModule):
         self.auto_encoder = auto_encoder
 
         # Classifier
+        fc_size = auto_encoder.encoder.fc_size
         classifier = []
-        for i in range(len(cfg.classifier_neurons)):
-            if i == 0:
-                layer_in_neurons = auto_encoder.encoder.fc_size
-            else:
-                layer_in_neurons = cfg.classifier_neurons[i - 1]
-            classifier.append(nn.Linear(layer_in_neurons, cfg.classifier_neurons[i]))
-            classifier.append(nn.ReLU())
-            classifier.append(nn.BatchNorm1d(cfg.classifier_neurons[i]))
-            classifier.append(nn.Dropout(cfg.dropout_p))
+        for i in range(cfg.classifier_size):
+            classifier.append(FCUnit(fc_size, cfg.dropout_p))
 
-        classifier.append(nn.Linear(cfg.classifier_neurons[-1], output_classes))
-        self.classifier = nn.ModuleList(classifier)
+        classifier.append(nn.Linear(fc_size, output_classes))
+        self.classifier = nn.Sequential(*classifier)
         self.optimizer = torch.optim.Adam(self.parameters(), lr=cfg.classifier_lr)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

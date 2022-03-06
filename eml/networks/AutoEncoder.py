@@ -52,7 +52,7 @@ class AutoEncoder(pl.LightningModule):
             torch.Tensor: The encoded features.
                 Shape: (batch_size, self.encoder.fc_size)
         """
-        (x, _, _, _) = self.encoder(x)
+        (x, _) = self.encoder(x)
         return x
 
     def full_forward(self, batch: Tuple[torch.Tensor, torch.Tensor]) -> torch.Tensor:
@@ -67,11 +67,11 @@ class AutoEncoder(pl.LightningModule):
             autoencoder. Shape: (batch_size, width, height)
         """
         x, y = batch
-        z, pool_indices, layer_sizes, orig_shape_2d = self.encoder(x)
+        z, orig_shape_2d = self.encoder(x)
         # if this is a variational autoencoder, add noise
         if self.variational_sigma is not None:
             z += torch.randn_like(z) * self.variational_sigma
-        x_hat = self.decoder(z, pool_indices, layer_sizes, orig_shape_2d)
+        x_hat = self.decoder(z, orig_shape_2d)
         loss = F.mse_loss(x_hat, x)
         return loss, x, x_hat
 

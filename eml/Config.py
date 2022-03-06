@@ -32,7 +32,7 @@ class Config:
     # Number of fully connected layers in the encoder.
     auto_encoder_fc_layers: int = 1
     # Number of neurons per layer in the classification head.
-    classifier_neurons: List[int] = field(default_factory=lambda: [128, 64])
+    classifier_size: int = 3
     # Sigma used for normal distribution in the variational autoencoder.
     # None does not add noise in the autoencoder.
     variational_sigma: Optional[float] = 0.01
