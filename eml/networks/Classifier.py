@@ -61,6 +61,9 @@ class Classifier(pl.LightningModule):
             )
         self.automatic_optimization = False
 
+        if cfg.advanced_initialization:
+            self._initialize()
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Applies the forward pass, which inclused encoding and classifying the images.
 
@@ -163,3 +166,25 @@ class Classifier(pl.LightningModule):
                 "lr_scheduler": self.lr_scheduler,
             },
         ]
+
+    def _initialize(self) -> None:
+        for m in self.classifier.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(
+                    m.weight.data, mode="fan_in", nonlinearity="relu"
+                )
+                if m.bias is not None:
+                    m.bias.data.zero_()
+            elif isinstance(m, nn.BatchNorm2d):
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
+            elif isinstance(m, nn.Linear):
+                nn.init.kaiming_normal_(
+                    m.weight.data, mode="fan_in", nonlinearity="relu"
+                )
+                m.bias.data.zero_()
+        nn.init.kaiming_normal_(
+            self.classifier[-1].weight.data,
+            mode="fan_in",
+            nonlinearity="linear",
+        )

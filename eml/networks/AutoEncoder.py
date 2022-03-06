@@ -2,6 +2,7 @@ from typing import Tuple
 
 import pytorch_lightning as pl
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
 from torch.utils.tensorboard.writer import SummaryWriter
@@ -61,6 +62,9 @@ class AutoEncoder(pl.LightningModule):
                 self.parameters(), lr=cfg.autoencoder_lr, weight_decay=cfg.weight_decay
             )
         self.automatic_optimization = False
+
+        if cfg.advanced_initialization:
+            self._initialize()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Encodes the images into a feature vector.
@@ -194,3 +198,28 @@ class AutoEncoder(pl.LightningModule):
             "optimizer": self.optimizer,
             "lr_scheduler": self.lr_scheduler,
         }
+
+        self._initialize()
+
+    def _initialize(self) -> None:
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(
+                    m.weight.data, mode="fan_in", nonlinearity="relu"
+                )
+                if m.bias is not None:
+                    m.bias.data.zero_()
+            elif isinstance(m, nn.BatchNorm2d):
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
+            elif isinstance(m, nn.Linear):
+                nn.init.kaiming_normal_(
+                    m.weight.data, mode="fan_in", nonlinearity="relu"
+                )
+                m.bias.data.zero_()
+        nn.init.kaiming_normal_(
+            self.encoder.fc_layers[-1].weight.data, mode="fan_in", nonlinearity="linear"
+        )
+        nn.init.kaiming_normal_(
+            self.decoder.fc_layers[0].weight.data, mode="fan_in", nonlinearity="linear"
+        )

@@ -11,7 +11,7 @@ class Config:
     # The number of epochs for training the autoencoder.
     unsupervised_epochs: int = 15
     # The number of epochs for training the classifier together.
-    classifier_epochs: int = 50
+    classifier_epochs: int = 100
 
     # The compute device
     device: str = "cuda"
@@ -43,6 +43,8 @@ class Config:
     # Probability for dropout layer
     dropout_p: float = 0.1
     weight_decay: float = 5e-4
+
+    advanced_initialization: bool = False
 
     # Use SAM optimizer
     use_sam: bool = True
