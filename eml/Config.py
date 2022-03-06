@@ -9,7 +9,7 @@ class Config:
     """Global configuration object."""
 
     # The number of epochs for training the autoencoder.
-    unsupervised_epochs: int = 15
+    unsupervised_epochs: int = 0
     # The number of epochs for training the classifier together.
     classifier_epochs: int = 100
 
@@ -34,9 +34,9 @@ class Config:
     # Autoencoder depth
     auto_encoder_depth: int = 2
     # Number of fully connected layers in the encoder.
-    auto_encoder_fc_layers: int = 2
+    auto_encoder_fc_layers: int = 0
     # Number of neurons per layer in the classification head.
-    classifier_size: int = 3
+    classifier_size: int = 1
     # Sigma used for normal distribution in the variational autoencoder.
     # None does not add noise in the autoencoder.
     variational_sigma: Optional[float] = 0.01
@@ -47,7 +47,7 @@ class Config:
     advanced_initialization: bool = False
 
     # Use SAM optimizer
-    use_sam: bool = True
+    use_sam: bool = False
     sam_rho: float = 2.0
     sam_adaptive: bool = True
     sam_momentum: float = 0.9
