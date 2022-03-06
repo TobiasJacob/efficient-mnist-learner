@@ -17,6 +17,7 @@ class Encoder(nn.Module):
         num_fc_layers: int,
         channels: List[int],
         dropout_p: float,
+        depth: int,
     ) -> None:
         """Creates a new encoder module. The encoder applies convolutions and
         max-pooling first. Then, the features are flattend and processed with
@@ -33,7 +34,8 @@ class Encoder(nn.Module):
         encoder = []
         for i in range(len(channels)):
             in_channels = 1 if i == 0 else channels[i - 1]
-            encoder.append(BasicUnit(in_channels, dropout_p))
+            for _ in range(depth):
+                encoder.append(BasicUnit(in_channels, dropout_p))
             encoder.append(DownsampleUnit(in_channels, channels[i], 3, dropout_p))
         self.encoder = nn.Sequential(*encoder)
 

@@ -29,6 +29,8 @@ class Config:
     classifier_lr: float = 1e-3
     # Channel size for the images in the encoder part.
     auto_encoder_channels: List[int] = field(default_factory=lambda: [16, 32])
+    # Autoencoder depth
+    auto_encoder_depth: int = 16
     # Number of fully connected layers in the encoder.
     auto_encoder_fc_layers: int = 3
     # Number of neurons per layer in the classification head.

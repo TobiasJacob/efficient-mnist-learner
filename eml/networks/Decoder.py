@@ -19,6 +19,7 @@ class Decoder(nn.Module):
         num_fc_layers: int,
         channels: List[int],
         dropout_p: float,
+        depth: int
     ) -> None:
         """Creates a new Decoder Module.
 
@@ -40,7 +41,8 @@ class Decoder(nn.Module):
         decoder = []
         for i in reversed(range(len(channels))):
             out_features = 1 if i == 0 else channels[i - 1]
-            decoder.append(BasicUnit(channels[i], dropout_p))
+            for _ in range(depth):
+                decoder.append(BasicUnit(channels[i], dropout_p))
             decoder.append(UpsampleUnit(channels[i], out_features, 3, dropout_p))
         self.decoder = nn.Sequential(*decoder)
 
