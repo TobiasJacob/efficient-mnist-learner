@@ -3,7 +3,6 @@ from typing import Tuple
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torchmetrics.functional import accuracy, f1_score
 
 from eml.Config import Config
@@ -47,30 +46,18 @@ class Classifier(pl.LightningModule):
         classifier.append(nn.Linear(fc_size, output_classes))
         self.classifier = nn.Sequential(*classifier)
         if cfg.use_sam:
-            self.optimizer_auto_encoder = SAM(
-                self.auto_encoder.parameters(),
+            self.optimizer = SAM(
+                self.parameters(),
                 torch.optim.SGD,
                 rho=cfg.sam_rho,
                 adaptive=cfg.sam_adaptive,
-                lr=cfg.sam_classifier_lr_autoenc,
-                momentum=cfg.sam_momentum,
-                weight_decay=cfg.weight_decay,
-            )
-            self.optimizer_classifier = SAM(
-                self.classifier.parameters(),
-                torch.optim.SGD,
-                rho=cfg.sam_rho,
-                adaptive=cfg.sam_adaptive,
-                lr=cfg.sam_classifier_lr,
+                lr=cfg.classifier_lr,
                 momentum=cfg.sam_momentum,
                 weight_decay=cfg.weight_decay,
             )
         else:
-            self.optimizer_auto_encoder = torch.optim.Adam(
-                self.auto_encoder.parameters(), lr=cfg.classifier_lr_autoenc
-            )
-            self.optimizer_classifier = torch.optim.Adam(
-                self.classifier.parameters(), lr=cfg.classifier_lr
+            self.optimizer = torch.optim.Adam(
+                self.parameters(), lr=cfg.classifier_lr, weight_decay=cfg.weight_decay
             )
         self.automatic_optimization = False
 
@@ -112,15 +99,11 @@ class Classifier(pl.LightningModule):
         self.log("classifier/train_loss", loss)
         self.log("classifier/train_acc", accuracy(preds, y))
         self.log("classifier/train_f1", f1_score(preds, y, num_classes=10))
-        self.log(
-            "classifier/lr_autoenc", self.optimizer_auto_encoder.param_groups[0]["lr"]
-        )
-        self.log("classifier/lr_clas", self.optimizer_classifier.param_groups[0]["lr"])
+        self.log("classifier/lr_clas", self.optimizer.param_groups[0]["lr"])
 
         if self.cfg.use_sam:
             loss.backward()
-            self.optimizer_auto_encoder.first_step(zero_grad=True)
-            self.optimizer_classifier.first_step(zero_grad=True)
+            self.optimizer.first_step(zero_grad=True)
 
             x, y = batch
             x = self.auto_encoder(x)
@@ -128,18 +111,14 @@ class Classifier(pl.LightningModule):
             preds = torch.argmax(x, dim=-1)
             loss = smooth_crossentropy(x, y).mean()
             loss.backward()
-            self.optimizer_auto_encoder.second_step(zero_grad=True)
-            self.optimizer_classifier.second_step(zero_grad=True)
+            self.optimizer.second_step(zero_grad=True)
         else:
-            self.optimizer_auto_encoder.zero_grad()
-            self.optimizer_classifier.zero_grad()
+            self.optimizer.zero_grad()
             loss.backward()
-            self.optimizer_auto_encoder.step()
-            self.optimizer_classifier.step()
+            self.optimizer.step()
 
     def on_epoch_end(self) -> None:
-        self.lr_scheduler_auto_encoder.step()
-        self.lr_scheduler_classifier.step()
+        self.lr_scheduler.step()
         return super().on_epoch_end()
 
     def validation_step(
@@ -173,23 +152,14 @@ class Classifier(pl.LightningModule):
         Returns:
             torch.optim.Optimizer: The optimizer for this network.
         """
-        self.lr_scheduler_auto_encoder = StepLR(
-            self.optimizer_auto_encoder,
-            self.cfg.classifier_lr_autoenc,
-            self.cfg.classifier_epochs,
-        )
-        self.lr_scheduler_classifier = StepLR(
-            self.optimizer_classifier,
+        self.lr_scheduler = StepLR(
+            self.optimizer,
             self.cfg.classifier_lr,
             self.cfg.classifier_epochs,
         )
         return [
             {
-                "optimizer": self.optimizer_auto_encoder,
-                "lr_scheduler": self.lr_scheduler_auto_encoder,
-            },
-            {
-                "optimizer": self.optimizer_classifier,
-                "lr_scheduler": self.lr_scheduler_classifier,
+                "optimizer": self.optimizer,
+                "lr_scheduler": self.lr_scheduler,
             },
         ]

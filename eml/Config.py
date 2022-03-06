@@ -27,8 +27,6 @@ class Config:
     autoencoder_lr: float = 1e-3
     # Learning rate for the classifier
     classifier_lr: float = 1e-3
-    # Learning rate for the autoencoder during classifier trainig
-    classifier_lr_autoenc: float = 1e-4
     # Channel size for the images in the encoder part.
     auto_encoder_channels: List[int] = field(default_factory=lambda: [16, 32])
     # Autoencoder encoded feature size
@@ -44,13 +42,13 @@ class Config:
     variational_sigma: Optional[float] = 0.01
     # Probability for dropout layer
     dropout_p: float = 0.1
+    weight_decay: float = 5e-4
 
     # Use SAM optimizer
     use_sam: bool = True
     sam_rho: float = 2.0
     sam_adaptive: bool = True
     sam_momentum: float = 0.9
-    weight_decay: float = 5e-4
 
     sam_autoencoder_lr: float = 0.1
     sam_classifier_lr: float = 0.1

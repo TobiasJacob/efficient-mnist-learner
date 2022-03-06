@@ -57,7 +57,9 @@ class AutoEncoder(pl.LightningModule):
                 weight_decay=cfg.weight_decay,
             )
         else:
-            self.optimizer = torch.optim.Adam(self.parameters(), lr=cfg.autoencoder_lr)
+            self.optimizer = torch.optim.Adam(
+                self.parameters(), lr=cfg.autoencoder_lr, weight_decay=cfg.weight_decay
+            )
         self.automatic_optimization = False
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
