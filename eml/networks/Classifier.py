@@ -35,7 +35,7 @@ class Classifier(pl.LightningModule):
         self.auto_encoder = auto_encoder
 
         # Classifier
-        fc_size = auto_encoder.encoder.fc_size
+        fc_size = cfg.autoencoder_features
         classifier = []
         for i in range(cfg.classifier_size):
             classifier.append(FCUnit(fc_size, cfg.dropout_p))

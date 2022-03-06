@@ -9,16 +9,16 @@ class Config:
     """Global configuration object."""
 
     # The number of epochs for training the autoencoder.
-    unsupervised_epochs: int = 5
+    unsupervised_epochs: int = 10
     # The number of epochs for training the classifier together.
-    classifier_epochs: int = 5
+    classifier_epochs: int = 20
 
     # The compute device
     device: str = "cuda"
     # Number of workers for the data loader. Should be CPU core count.
     workers: int = 4
     # Batch size
-    batch_size: int = 64
+    batch_size: int = 128
 
     # How many supervised training labels the NN has access to.
     num_train_labels: int = 60000
@@ -29,17 +29,19 @@ class Config:
     classifier_lr: float = 1e-3
     # Channel size for the images in the encoder part.
     auto_encoder_channels: List[int] = field(default_factory=lambda: [16, 32])
+    # Autoencoder encoded feature size
+    autoencoder_features: int = 128
     # Autoencoder depth
-    auto_encoder_depth: int = 16
+    auto_encoder_depth: int = 2
     # Number of fully connected layers in the encoder.
-    auto_encoder_fc_layers: int = 3
+    auto_encoder_fc_layers: int = 1
     # Number of neurons per layer in the classification head.
     classifier_size: int = 3
     # Sigma used for normal distribution in the variational autoencoder.
     # None does not add noise in the autoencoder.
     variational_sigma: Optional[float] = 0.01
     # Probability for dropout layer
-    dropout_p: float = 0.2
+    dropout_p: float = 0.1
 
 
 def config_description(

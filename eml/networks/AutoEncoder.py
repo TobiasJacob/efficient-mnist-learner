@@ -33,8 +33,10 @@ class AutoEncoder(pl.LightningModule):
             cfg.auto_encoder_channels,
             cfg.dropout_p,
             cfg.auto_encoder_depth,
+            cfg.autoencoder_features,
         )
         self.decoder = Decoder(
+            cfg.autoencoder_features,
             self.encoder.fc_size,
             cfg.auto_encoder_fc_layers,
             cfg.auto_encoder_channels,

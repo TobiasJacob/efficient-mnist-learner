@@ -15,11 +15,12 @@ class Decoder(nn.Module):
 
     def __init__(
         self,
+        encoded_feature_size: int,
         fc_size: int,
         num_fc_layers: int,
         channels: List[int],
         dropout_p: float,
-        depth: int
+        depth: int,
     ) -> None:
         """Creates a new Decoder Module.
 
@@ -31,10 +32,9 @@ class Decoder(nn.Module):
 
         # Fully connected part
         fc_layers = []
-        for _ in range(num_fc_layers - 1):
+        fc_layers.append(nn.Linear(encoded_feature_size, fc_size))
+        for _ in range(num_fc_layers):
             fc_layers.append(FCUnit(fc_size, dropout_p))
-        if num_fc_layers > 0:
-            fc_layers.append(nn.Linear(fc_size, fc_size))
 
         self.fc_layers = nn.Sequential(*fc_layers)
 
