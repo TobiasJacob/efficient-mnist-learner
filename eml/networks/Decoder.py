@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Type
 
 import torch
 import torch.nn as nn
@@ -21,6 +21,7 @@ class Decoder(nn.Module):
         channels: List[int],
         dropout_p: float,
         depth: int,
+        non_linearity: Type,
     ) -> None:
         """Creates a new Decoder Module.
 
@@ -34,7 +35,7 @@ class Decoder(nn.Module):
         fc_layers = []
         fc_layers.append(nn.Linear(encoded_feature_size, fc_size))
         for _ in range(num_fc_layers):
-            fc_layers.append(FCUnit(fc_size, dropout_p))
+            fc_layers.append(FCUnit(fc_size, dropout_p, non_linearity))
 
         self.fc_layers = nn.Sequential(*fc_layers)
 
@@ -42,8 +43,10 @@ class Decoder(nn.Module):
         for i in reversed(range(len(channels))):
             out_features = 1 if i == 0 else channels[i - 1]
             for _ in range(depth):
-                decoder.append(BasicUnit(channels[i], dropout_p))
-            decoder.append(UpsampleUnit(channels[i], out_features, 3, dropout_p))
+                decoder.append(BasicUnit(channels[i], dropout_p, non_linearity))
+            decoder.append(
+                UpsampleUnit(channels[i], out_features, 3, dropout_p, non_linearity)
+            )
         self.decoder = nn.Sequential(*decoder)
 
     def forward(

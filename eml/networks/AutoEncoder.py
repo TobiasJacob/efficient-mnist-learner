@@ -7,7 +7,7 @@ import torch.nn.functional as F
 import torchvision
 from torch.utils.tensorboard.writer import SummaryWriter
 
-from eml.Config import Config
+from eml.Config import Config, get_non_linearity
 from eml.networks.Decoder import Decoder
 from eml.networks.Encoder import Encoder
 from eml.sam.sam import SAM
@@ -38,6 +38,7 @@ class AutoEncoder(pl.LightningModule):
             cfg.dropout_p,
             cfg.auto_encoder_depth,
             cfg.autoencoder_features,
+            get_non_linearity(cfg)
         )
         self.decoder = Decoder(
             cfg.autoencoder_features,
@@ -46,7 +47,9 @@ class AutoEncoder(pl.LightningModule):
             cfg.auto_encoder_channels,
             cfg.dropout_p,
             cfg.auto_encoder_depth,
+            get_non_linearity(cfg)
         )
+
         if cfg.use_sam:
             self.optimizer = SAM(
                 self.parameters(),

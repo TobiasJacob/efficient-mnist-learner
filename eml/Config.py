@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List, Optional, Type
 
+import torch.nn as nn
 from omegaconf import DictConfig
 
 
@@ -45,6 +46,7 @@ class Config:
     weight_decay: float = 5e-4
 
     advanced_initialization: bool = False
+    non_linearity: str = "relu"
 
     # Use SAM optimizer
     use_sam: bool = False
@@ -55,6 +57,15 @@ class Config:
     sam_autoencoder_lr: float = 0.1
     sam_classifier_lr: float = 0.1
     sam_classifier_lr_autoenc: float = 0.1
+
+
+def get_non_linearity(cfg: Config) -> Type:
+    if cfg.non_linearity == "relu":
+        return nn.ReLU
+    if cfg.non_linearity == "leaky_relu":
+        return nn.LeakyReLU
+    if cfg.non_linearity == "elu":
+        return nn.ELU
 
 
 def config_description(

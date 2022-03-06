@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 from torchmetrics.functional import accuracy, f1_score
 
-from eml.Config import Config
+from eml.Config import Config, get_non_linearity
 from eml.networks.AutoEncoder import AutoEncoder
 from eml.networks.FCUnit import FCUnit
 from eml.sam.sam import SAM
@@ -41,10 +41,11 @@ class Classifier(pl.LightningModule):
         fc_size = cfg.autoencoder_features
         classifier = []
         for i in range(cfg.classifier_size):
-            classifier.append(FCUnit(fc_size, cfg.dropout_p))
-
+            classifier.append(FCUnit(fc_size, cfg.dropout_p, get_non_linearity(cfg)))
         classifier.append(nn.Linear(fc_size, output_classes))
         self.classifier = nn.Sequential(*classifier)
+
+        # Optimizer
         if cfg.use_sam:
             self.optimizer = SAM(
                 self.parameters(),

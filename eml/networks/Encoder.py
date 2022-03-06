@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Type
 
 import torch
 import torch.nn as nn
@@ -19,6 +19,7 @@ class Encoder(nn.Module):
         dropout_p: float,
         depth: int,
         encoded_feature_size: int,
+        non_linearity: Type,
     ) -> None:
         """Creates a new encoder module. The encoder applies convolutions and
         max-pooling first. Then, the features are flattend and processed with
@@ -36,8 +37,10 @@ class Encoder(nn.Module):
         for i in range(len(channels)):
             in_channels = 1 if i == 0 else channels[i - 1]
             for _ in range(depth):
-                encoder.append(BasicUnit(in_channels, dropout_p))
-            encoder.append(DownsampleUnit(in_channels, channels[i], 3, dropout_p))
+                encoder.append(BasicUnit(in_channels, dropout_p, non_linearity))
+            encoder.append(
+                DownsampleUnit(in_channels, channels[i], 3, dropout_p, non_linearity)
+            )
         self.encoder = nn.Sequential(*encoder)
 
         # Fully connected part
@@ -46,7 +49,7 @@ class Encoder(nn.Module):
         self.fc_size = x.flatten().shape[0]
         fc_layers = []
         for _ in range(num_fc_layers):
-            fc_layers.append(FCUnit(self.fc_size, dropout_p))
+            fc_layers.append(FCUnit(self.fc_size, dropout_p, non_linearity))
         fc_layers.append(nn.Linear(self.fc_size, encoded_feature_size))
 
         self.fc_layers = nn.Sequential(*fc_layers)
