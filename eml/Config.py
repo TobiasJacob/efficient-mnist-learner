@@ -12,7 +12,7 @@ class Config:
     # The number of epochs for training the autoencoder.
     unsupervised_epochs: int = 0
     # The number of epochs for training the classifier together.
-    classifier_epochs: int = 100
+    classifier_epochs: int = 300
 
     # The compute device
     device: str = "cuda"
@@ -33,7 +33,7 @@ class Config:
     # Autoencoder encoded feature size
     autoencoder_features: int = 128
     # Autoencoder depth
-    auto_encoder_depth: int = 2
+    auto_encoder_depth: int = 3
     # Number of fully connected layers in the encoder.
     auto_encoder_fc_layers: int = 0
     # Number of neurons per layer in the classification head.
