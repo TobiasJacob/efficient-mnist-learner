@@ -9,6 +9,8 @@ from torchmetrics.functional import accuracy, f1_score
 from eml.Config import Config
 from eml.networks.AutoEncoder import AutoEncoder
 from eml.networks.FCUnit import FCUnit
+from eml.sam.sam import SAM
+from eml.sam.smooth_cross_entropy import smooth_crossentropy
 from eml.sam.step_lr import StepLR
 
 
@@ -44,12 +46,32 @@ class Classifier(pl.LightningModule):
 
         classifier.append(nn.Linear(fc_size, output_classes))
         self.classifier = nn.Sequential(*classifier)
-        self.optimizer_auto_encoder = torch.optim.Adam(
-            self.auto_encoder.parameters(), lr=cfg.classifier_lr_autoenc
-        )
-        self.optimizer_classifier = torch.optim.Adam(
-            self.classifier.parameters(), lr=cfg.classifier_lr
-        )
+        if cfg.use_sam:
+            self.optimizer_auto_encoder = SAM(
+                self.auto_encoder.parameters(),
+                torch.optim.SGD,
+                rho=cfg.sam_rho,
+                adaptive=cfg.sam_adaptive,
+                lr=cfg.sam_classifier_lr_autoenc,
+                momentum=cfg.sam_momentum,
+                weight_decay=cfg.weight_decay,
+            )
+            self.optimizer_classifier = SAM(
+                self.classifier.parameters(),
+                torch.optim.SGD,
+                rho=cfg.sam_rho,
+                adaptive=cfg.sam_adaptive,
+                lr=cfg.sam_classifier_lr,
+                momentum=cfg.sam_momentum,
+                weight_decay=cfg.weight_decay,
+            )
+        else:
+            self.optimizer_auto_encoder = torch.optim.Adam(
+                self.auto_encoder.parameters(), lr=cfg.classifier_lr_autoenc
+            )
+            self.optimizer_classifier = torch.optim.Adam(
+                self.classifier.parameters(), lr=cfg.classifier_lr
+            )
         self.automatic_optimization = False
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -86,7 +108,7 @@ class Classifier(pl.LightningModule):
         x = self.auto_encoder(x)
         x = self.classifier(x)
         preds = torch.argmax(x, dim=-1)
-        loss = F.cross_entropy(x, y)
+        loss = smooth_crossentropy(x, y).mean()
         self.log("classifier/train_loss", loss)
         self.log("classifier/train_acc", accuracy(preds, y))
         self.log("classifier/train_f1", f1_score(preds, y, num_classes=10))
@@ -95,11 +117,30 @@ class Classifier(pl.LightningModule):
         )
         self.log("classifier/lr_clas", self.optimizer_classifier.param_groups[0]["lr"])
 
-        self.optimizer_auto_encoder.zero_grad()
-        self.optimizer_classifier.zero_grad()
-        loss.backward()
-        self.optimizer_auto_encoder.step()
-        self.optimizer_classifier.step()
+        if self.cfg.use_sam:
+            loss.backward()
+            self.optimizer_auto_encoder.first_step(zero_grad=True)
+            self.optimizer_classifier.first_step(zero_grad=True)
+
+            x, y = batch
+            x = self.auto_encoder(x)
+            x = self.classifier(x)
+            preds = torch.argmax(x, dim=-1)
+            loss = smooth_crossentropy(x, y).mean()
+            loss.backward()
+            self.optimizer_auto_encoder.second_step(zero_grad=True)
+            self.optimizer_classifier.second_step(zero_grad=True)
+        else:
+            self.optimizer_auto_encoder.zero_grad()
+            self.optimizer_classifier.zero_grad()
+            loss.backward()
+            self.optimizer_auto_encoder.step()
+            self.optimizer_classifier.step()
+
+    def on_epoch_end(self) -> None:
+        self.lr_scheduler_auto_encoder.step()
+        self.lr_scheduler_classifier.step()
+        return super().on_epoch_end()
 
     def validation_step(
         self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
@@ -116,10 +157,11 @@ class Classifier(pl.LightningModule):
             torch.Tensor: The loss for this validation sample. Shape: (1)
         """
         x, y = batch
+
         x = self.auto_encoder(x)
         x = self.classifier(x)
         preds = torch.argmax(x, dim=-1)
-        loss = F.cross_entropy(x, y)
+        loss = smooth_crossentropy(x, y)
         self.log("classifier/val_loss", loss)
         self.log("classifier/val_acc", accuracy(preds, y))
         self.log("classifier/val_f1", f1_score(preds, y, num_classes=10))
@@ -131,12 +173,12 @@ class Classifier(pl.LightningModule):
         Returns:
             torch.optim.Optimizer: The optimizer for this network.
         """
-        lr_scheduler_auto_encoder = StepLR(
+        self.lr_scheduler_auto_encoder = StepLR(
             self.optimizer_auto_encoder,
             self.cfg.classifier_lr_autoenc,
             self.cfg.classifier_epochs,
         )
-        lr_scheduler_classifier = StepLR(
+        self.lr_scheduler_classifier = StepLR(
             self.optimizer_classifier,
             self.cfg.classifier_lr,
             self.cfg.classifier_epochs,
@@ -144,10 +186,10 @@ class Classifier(pl.LightningModule):
         return [
             {
                 "optimizer": self.optimizer_auto_encoder,
-                "lr_scheduler": lr_scheduler_auto_encoder,
+                "lr_scheduler": self.lr_scheduler_auto_encoder,
             },
             {
                 "optimizer": self.optimizer_classifier,
-                "lr_scheduler": lr_scheduler_classifier,
+                "lr_scheduler": self.lr_scheduler_classifier,
             },
         ]

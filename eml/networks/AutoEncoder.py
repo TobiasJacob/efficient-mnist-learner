@@ -9,6 +9,7 @@ from torch.utils.tensorboard.writer import SummaryWriter
 from eml.Config import Config
 from eml.networks.Decoder import Decoder
 from eml.networks.Encoder import Encoder
+from eml.sam.sam import SAM
 from eml.sam.step_lr import StepLR
 
 
@@ -45,7 +46,19 @@ class AutoEncoder(pl.LightningModule):
             cfg.dropout_p,
             cfg.auto_encoder_depth,
         )
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=cfg.autoencoder_lr)
+        if cfg.use_sam:
+            self.optimizer = SAM(
+                self.parameters(),
+                torch.optim.SGD,
+                rho=cfg.sam_rho,
+                adaptive=cfg.sam_adaptive,
+                lr=cfg.sam_autoencoder_lr,
+                momentum=cfg.sam_momentum,
+                weight_decay=cfg.weight_decay,
+            )
+        else:
+            self.optimizer = torch.optim.Adam(self.parameters(), lr=cfg.autoencoder_lr)
+        self.automatic_optimization = False
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Encodes the images into a feature vector.
@@ -116,6 +129,16 @@ class AutoEncoder(pl.LightningModule):
             torch.Tensor: The loss for this training sample. Shape: (1)
         """
         loss, x, x_hat = self.full_forward(batch)
+        loss.backward()
+        if self.cfg.use_sam:
+            self.optimizer.first_step(zero_grad=True)
+
+            loss, x, x_hat = self.full_forward(batch)
+            loss.backward()
+            self.optimizer.second_step(zero_grad=True)
+        else:
+            self.optimizer.step()
+
         self.log("autoencoder/train_loss", loss)
         self.log("autoencoder/lr", self.optimizer.param_groups[0]["lr"])
         if batch_idx % 200 == 0:
@@ -127,7 +150,9 @@ class AutoEncoder(pl.LightningModule):
                 self.global_step,
             )
 
-        return loss
+    def on_epoch_end(self) -> None:
+        self.lr_scheduler.step()
+        return super().on_epoch_end()
 
     def validation_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
         """Runs the full forward pass and calculates the loss for a validation sample.
@@ -160,10 +185,10 @@ class AutoEncoder(pl.LightningModule):
         Returns:
             torch.optim.Optimizer: The optimizer for this network.
         """
-        lr_scheduler = StepLR(
+        self.lr_scheduler = StepLR(
             self.optimizer, self.cfg.autoencoder_lr, self.cfg.unsupervised_epochs
         )
         return {
             "optimizer": self.optimizer,
-            "lr_scheduler": lr_scheduler,
+            "lr_scheduler": self.lr_scheduler,
         }

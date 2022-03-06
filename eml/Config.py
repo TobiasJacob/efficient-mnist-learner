@@ -9,9 +9,9 @@ class Config:
     """Global configuration object."""
 
     # The number of epochs for training the autoencoder.
-    unsupervised_epochs: int = 10
+    unsupervised_epochs: int = 15
     # The number of epochs for training the classifier together.
-    classifier_epochs: int = 20
+    classifier_epochs: int = 50
 
     # The compute device
     device: str = "cuda"
@@ -21,7 +21,7 @@ class Config:
     batch_size: int = 128
 
     # How many supervised training labels the NN has access to.
-    num_train_labels: int = 60000
+    num_train_labels: int = 10000
 
     # Learning rate for the autoencoder
     autoencoder_lr: float = 1e-3
@@ -36,7 +36,7 @@ class Config:
     # Autoencoder depth
     auto_encoder_depth: int = 2
     # Number of fully connected layers in the encoder.
-    auto_encoder_fc_layers: int = 1
+    auto_encoder_fc_layers: int = 2
     # Number of neurons per layer in the classification head.
     classifier_size: int = 3
     # Sigma used for normal distribution in the variational autoencoder.
@@ -44,6 +44,17 @@ class Config:
     variational_sigma: Optional[float] = 0.01
     # Probability for dropout layer
     dropout_p: float = 0.1
+
+    # Use SAM optimizer
+    use_sam: bool = True
+    sam_rho: float = 2.0
+    sam_adaptive: bool = True
+    sam_momentum: float = 0.9
+    weight_decay: float = 5e-4
+
+    sam_autoencoder_lr: float = 0.1
+    sam_classifier_lr: float = 0.1
+    sam_classifier_lr_autoenc: float = 0.1
 
 
 def config_description(
@@ -71,7 +82,7 @@ def config_description(
         default_value = getattr(default_config, fld)
         if type(val) == DictConfig:
             desc += f" {config_description(val, default_value)}"
-        elif type(val) == float:
+        elif type(val) == float and val != default_value:
             desc += f" {fld}={val:1.2}"
         elif val != default_value:
             desc += f" {fld}={val}"
