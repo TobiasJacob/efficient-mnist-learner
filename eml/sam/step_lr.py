@@ -13,10 +13,10 @@ class StepLR(_LRScheduler):
         super().__init__(optimizer)
 
     def get_lr(self) -> float:
-        return [self.base] * len(self.optimizer.param_groups)
-        if self.last_epoch < self.total_epochs * 5 / 10:
+        # return [self.base] * len(self.optimizer.param_groups)
+        if self.last_epoch < self.total_epochs * 4 / 10:
             lr = self.base
-        elif self.last_epoch < self.total_epochs * 8 / 10:
+        elif self.last_epoch < self.total_epochs * 7 / 10:
             lr = self.base * 0.2
         elif self.last_epoch < self.total_epochs * 9 / 10:
             lr = self.base * 0.2**2

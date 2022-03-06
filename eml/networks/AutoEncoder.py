@@ -38,7 +38,7 @@ class AutoEncoder(pl.LightningModule):
             cfg.dropout_p,
             cfg.auto_encoder_depth,
             cfg.autoencoder_features,
-            get_non_linearity(cfg)
+            get_non_linearity(cfg),
         )
         self.decoder = Decoder(
             cfg.autoencoder_features,
@@ -47,7 +47,7 @@ class AutoEncoder(pl.LightningModule):
             cfg.auto_encoder_channels,
             cfg.dropout_p,
             cfg.auto_encoder_depth,
-            get_non_linearity(cfg)
+            get_non_linearity(cfg),
         )
 
         if cfg.use_sam:
@@ -138,14 +138,16 @@ class AutoEncoder(pl.LightningModule):
             torch.Tensor: The loss for this training sample. Shape: (1)
         """
         loss, x, x_hat = self.full_forward(batch)
-        loss.backward()
         if self.cfg.use_sam:
+            loss.backward()
             self.optimizer.first_step(zero_grad=True)
 
             loss, x, x_hat = self.full_forward(batch)
             loss.backward()
             self.optimizer.second_step(zero_grad=True)
         else:
+            self.optimizer.zero_grad()
+            loss.backward()
             self.optimizer.step()
 
         self.log("autoencoder/train_loss", loss)
