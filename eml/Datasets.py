@@ -26,11 +26,11 @@ def load_data(cfg: Config) -> Tuple[DataLoader, DataLoader, DataLoader]:
     """
     tra = [
         transforms.ToTensor(),
-        transforms.RandomHorizontalFlip(),
+        # transforms.RandomHorizontalFlip(),
         # transforms.RandomVerticalFlip(),
         transforms.RandomRotation(10, expand=True),
-        transforms.RandomResizedCrop((28, 28), scale=(0.5, 1.0), ratio=(3 / 4, 4 / 3)),
-        transforms.RandomErasing(),
+        transforms.RandomResizedCrop((28, 28), scale=(0.8, 1.0), ratio=(0.9, 1.1)),
+        # transforms.RandomErasing(),
     ]
     # tra = [transforms.ToTensor(), transforms.AutoAugment()]
     train_dataset_full = torchvision.datasets.FashionMNIST(
