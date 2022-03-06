@@ -2,8 +2,8 @@ from typing import List
 
 import torch
 import torch.nn as nn
-from sam.example.model.wide_res_net import BasicUnit
 
+from eml.networks.BasicUnit import BasicUnit
 from eml.networks.FCUnit import FCUnit
 from eml.networks.UpsampleUnit import UpsampleUnit
 

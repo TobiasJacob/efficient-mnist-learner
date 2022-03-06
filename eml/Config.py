@@ -9,9 +9,9 @@ class Config:
     """Global configuration object."""
 
     # The number of epochs for training the autoencoder.
-    unsupervised_epochs: int = 10
+    unsupervised_epochs: int = 5
     # The number of epochs for training the classifier together.
-    classifier_epochs: int = 10
+    classifier_epochs: int = 5
 
     # The compute device
     device: str = "cuda"
@@ -30,7 +30,7 @@ class Config:
     # Channel size for the images in the encoder part.
     auto_encoder_channels: List[int] = field(default_factory=lambda: [16, 32])
     # Number of fully connected layers in the encoder.
-    auto_encoder_fc_layers: int = 1
+    auto_encoder_fc_layers: int = 3
     # Number of neurons per layer in the classification head.
     classifier_size: int = 3
     # Sigma used for normal distribution in the variational autoencoder.
