@@ -29,15 +29,15 @@ class Config:
     # Learning rate for the classifier
     classifier_lr: float = 1e-3
     # Channel size for the images in the encoder part.
-    auto_encoder_channels: List[int] = field(default_factory=lambda: [16, 32])
+    auto_encoder_channels: List[int] = field(default_factory=lambda: [16, 64])
     # Autoencoder encoded feature size
-    autoencoder_features: int = 128
+    autoencoder_features: int = 256
     # Autoencoder depth
     auto_encoder_depth: int = 3
     # Number of fully connected layers in the encoder.
     auto_encoder_fc_layers: int = 0
     # Number of neurons per layer in the classification head.
-    classifier_size: int = 1
+    classifier_size: int = 3
     # Sigma used for normal distribution in the variational autoencoder.
     # None does not add noise in the autoencoder.
     variational_sigma: Optional[float] = 0.01
