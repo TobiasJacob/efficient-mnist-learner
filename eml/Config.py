@@ -44,7 +44,7 @@ class Config:
     # Probability for dropout layer
     dropout_p: float = 0.1
     weight_decay: float = 5e-4
-    autoencoder_stride: int = 3
+    autoencoder_stride: int = 2
 
     advanced_initialization: bool = False
     non_linearity: str = "relu"
