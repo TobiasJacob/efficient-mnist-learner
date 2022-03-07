@@ -2,13 +2,16 @@ from typing import Tuple
 
 import pytorch_lightning as pl
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
 from torch.utils.tensorboard.writer import SummaryWriter
 
-from eml.Config import Config
+from eml.Config import Config, get_non_linearity
 from eml.networks.Decoder import Decoder
 from eml.networks.Encoder import Encoder
+from eml.sam.sam import SAM
+from eml.sam.step_lr import StepLR
 
 
 class AutoEncoder(pl.LightningModule):
@@ -26,20 +29,47 @@ class AutoEncoder(pl.LightningModule):
             image_size (Tuple[int, int], optional): Image size. Defaults to (28, 28).
         """
         super().__init__()
+        self.cfg = cfg
         self.variational_sigma = cfg.variational_sigma
         self.encoder = Encoder(
             image_size,
             cfg.auto_encoder_fc_layers,
             cfg.auto_encoder_channels,
             cfg.dropout_p,
+            cfg.auto_encoder_depth,
+            cfg.autoencoder_features,
+            get_non_linearity(cfg),
+            cfg.autoencoder_stride,
         )
         self.decoder = Decoder(
+            cfg.autoencoder_features,
             self.encoder.fc_size,
             cfg.auto_encoder_fc_layers,
             cfg.auto_encoder_channels,
             cfg.dropout_p,
+            cfg.auto_encoder_depth,
+            get_non_linearity(cfg),
+            cfg.autoencoder_stride,
         )
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=cfg.autoencoder_lr)
+
+        if cfg.use_sam:
+            self.optimizer = SAM(
+                self.parameters(),
+                torch.optim.SGD,
+                rho=cfg.sam_rho,
+                adaptive=cfg.sam_adaptive,
+                lr=cfg.sam_autoencoder_lr,
+                momentum=cfg.sam_momentum,
+                weight_decay=cfg.weight_decay,
+            )
+        else:
+            self.optimizer = torch.optim.Adam(
+                self.parameters(), lr=cfg.autoencoder_lr, weight_decay=cfg.weight_decay
+            )
+        self.automatic_optimization = False
+
+        if cfg.advanced_initialization:
+            self._initialize()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Encodes the images into a feature vector.
@@ -52,7 +82,7 @@ class AutoEncoder(pl.LightningModule):
             torch.Tensor: The encoded features.
                 Shape: (batch_size, self.encoder.fc_size)
         """
-        (x, _, _, _) = self.encoder(x)
+        (x, _) = self.encoder(x)
         return x
 
     def full_forward(self, batch: Tuple[torch.Tensor, torch.Tensor]) -> torch.Tensor:
@@ -66,12 +96,14 @@ class AutoEncoder(pl.LightningModule):
             torch.Tensor: The reconstructed images after being processed by the
             autoencoder. Shape: (batch_size, width, height)
         """
+        if self.cfg.autoencoder_stride != 3:
+            return None
         x, y = batch
-        z, pool_indices, layer_sizes, orig_shape_2d = self.encoder(x)
+        z, orig_shape_2d = self.encoder(x)
         # if this is a variational autoencoder, add noise
         if self.variational_sigma is not None:
             z += torch.randn_like(z) * self.variational_sigma
-        x_hat = self.decoder(z, pool_indices, layer_sizes, orig_shape_2d)
+        x_hat = self.decoder(z, orig_shape_2d)
         loss = F.mse_loss(x_hat, x)
         return loss, x, x_hat
 
@@ -109,8 +141,23 @@ class AutoEncoder(pl.LightningModule):
         Returns:
             torch.Tensor: The loss for this training sample. Shape: (1)
         """
+        if self.cfg.autoencoder_stride != 3:
+            return None
         loss, x, x_hat = self.full_forward(batch)
+        if self.cfg.use_sam:
+            loss.backward()
+            self.optimizer.first_step(zero_grad=True)
+
+            loss, x, x_hat = self.full_forward(batch)
+            loss.backward()
+            self.optimizer.second_step(zero_grad=True)
+        else:
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+
         self.log("autoencoder/train_loss", loss)
+        self.log("autoencoder/lr", self.optimizer.param_groups[0]["lr"])
         if batch_idx % 200 == 0:
             tensorboard: SummaryWriter = self.logger.experiment
             grid = self.visualize_reconstructions(x, x_hat)
@@ -120,7 +167,9 @@ class AutoEncoder(pl.LightningModule):
                 self.global_step,
             )
 
-        return loss
+    def on_epoch_end(self) -> None:
+        self.lr_scheduler.step()
+        return super().on_epoch_end()
 
     def validation_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
         """Runs the full forward pass and calculates the loss for a validation sample.
@@ -135,6 +184,8 @@ class AutoEncoder(pl.LightningModule):
         Returns:
             torch.Tensor: The loss for this validation sample.
         """
+        if self.cfg.autoencoder_stride != 3:
+            return None
         loss, x, x_hat = self.full_forward(batch)
         self.log("autoencoder/val_loss", loss)
         if batch_idx % 100 == 0:
@@ -153,4 +204,35 @@ class AutoEncoder(pl.LightningModule):
         Returns:
             torch.optim.Optimizer: The optimizer for this network.
         """
-        return self.optimizer
+        self.lr_scheduler = StepLR(
+            self.optimizer, self.cfg.autoencoder_lr, self.cfg.unsupervised_epochs
+        )
+        return {
+            "optimizer": self.optimizer,
+            "lr_scheduler": self.lr_scheduler,
+        }
+
+        self._initialize()
+
+    def _initialize(self) -> None:
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(
+                    m.weight.data, mode="fan_in", nonlinearity="relu"
+                )
+                if m.bias is not None:
+                    m.bias.data.zero_()
+            elif isinstance(m, nn.BatchNorm2d):
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
+            elif isinstance(m, nn.Linear):
+                nn.init.kaiming_normal_(
+                    m.weight.data, mode="fan_in", nonlinearity="relu"
+                )
+                m.bias.data.zero_()
+        nn.init.kaiming_normal_(
+            self.encoder.fc_layers[-1].weight.data, mode="fan_in", nonlinearity="linear"
+        )
+        nn.init.kaiming_normal_(
+            self.decoder.fc_layers[0].weight.data, mode="fan_in", nonlinearity="linear"
+        )

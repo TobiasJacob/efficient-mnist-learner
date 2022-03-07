@@ -3,6 +3,7 @@ from typing import Tuple
 
 import torch
 import torchvision
+from torch.utils.data import Subset
 from torch.utils.data.dataloader import DataLoader
 from torchvision import transforms
 
@@ -23,11 +24,20 @@ def load_data(cfg: Config) -> Tuple[DataLoader, DataLoader, DataLoader]:
                 - The smaller train data loader with images+labels for the classifier.
                 - The evaluation data loader with images+labels.
     """
+    tra = [
+        transforms.ToTensor(),
+        # transforms.RandomHorizontalFlip(),
+        # transforms.RandomVerticalFlip(),
+        transforms.RandomRotation(10, expand=True),
+        transforms.RandomResizedCrop((28, 28), scale=(0.8, 1.0), ratio=(0.9, 1.1)),
+        # transforms.RandomErasing(),
+    ]
+    # tra = [transforms.ToTensor(), transforms.AutoAugment()]
     train_dataset_full = torchvision.datasets.FashionMNIST(
         os.path.expanduser("~/dataset"),
         train=True,
         download=True,
-        transform=transforms.Compose([transforms.ToTensor()]),
+        transform=transforms.Compose(tra),
     )
     train_loader_full = torch.utils.data.DataLoader(
         train_dataset_full,

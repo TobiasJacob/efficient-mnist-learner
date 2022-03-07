@@ -1,7 +1,11 @@
-from typing import List, Tuple
+from typing import List, Tuple, Type
 
 import torch
 import torch.nn as nn
+
+from eml.networks.BasicUnit import BasicUnit
+from eml.networks.DownsampleUnit import DownsampleUnit
+from eml.networks.FCUnit import FCUnit
 
 
 class Encoder(nn.Module):
@@ -13,6 +17,10 @@ class Encoder(nn.Module):
         num_fc_layers: int,
         channels: List[int],
         dropout_p: float,
+        depth: int,
+        encoded_feature_size: int,
+        non_linearity: Type,
+        stride: int,
     ) -> None:
         """Creates a new encoder module. The encoder applies convolutions and
         max-pooling first. Then, the features are flattend and processed with
@@ -28,27 +36,26 @@ class Encoder(nn.Module):
         # Down convolutions
         encoder = []
         for i in range(len(channels)):
-            encoder.append(nn.Conv2d(1 if i == 0 else channels[i - 1], channels[i], 3))
-            encoder.append(nn.ReLU())
-            encoder.append(nn.BatchNorm2d(channels[i]))
-            encoder.append(nn.Dropout2d(dropout_p))
-            encoder.append(nn.MaxPool2d((2, 2), return_indices=True))
-        self.encoder = nn.ModuleList(encoder)
+            in_channels = 1 if i == 0 else channels[i - 1]
+            for _ in range(depth):
+                encoder.append(BasicUnit(in_channels, dropout_p, non_linearity))
+            encoder.append(
+                DownsampleUnit(
+                    in_channels, channels[i], stride, dropout_p, non_linearity
+                )
+            )
+        self.encoder = nn.Sequential(*encoder)
 
         # Fully connected part
         x = torch.zeros((1, 1, *image_size))
         x = self(x, simulate=True)
         self.fc_size = x.flatten().shape[0]
         fc_layers = []
-        for _ in range(num_fc_layers - 1):
-            fc_layers.append(nn.Linear(self.fc_size, self.fc_size))
-            fc_layers.append(nn.ReLU())
-            fc_layers.append(nn.BatchNorm1d(self.fc_size))
-            fc_layers.append(nn.Dropout(dropout_p))
-        if num_fc_layers > 0:
-            fc_layers.append(nn.Linear(self.fc_size, self.fc_size))
+        for _ in range(num_fc_layers):
+            fc_layers.append(FCUnit(self.fc_size, dropout_p, non_linearity))
+        fc_layers.append(nn.Linear(self.fc_size, encoded_feature_size))
 
-        self.fc_layers = nn.ModuleList(fc_layers)
+        self.fc_layers = nn.Sequential(*fc_layers)
         print(f"Encoded feature size: {self.fc_size}")
 
     def forward(
@@ -70,21 +77,12 @@ class Encoder(nn.Module):
                 Encoded feature shape: (batch_size, self.fc_size)
         """
         # Apply down convolutions
-        pool_indices = []
-        layer_sizes = []
-        for layer in self.encoder:
-            if type(layer) is nn.MaxPool2d:
-                layer_sizes.append(x.shape)
-                x, ind = layer(x)
-                pool_indices.append(ind)
-            else:
-                x = layer(x)
+        x = self.encoder(x)
         orig_shape_2d = x.shape
         # When simulating, return the x for calculating self.fc_size in the constructor
         if simulate:
             return x
         # Flatten and process with fully connected layers
         x = x.reshape(x.shape[0], self.fc_size)
-        for layer in self.fc_layers:
-            x = layer(x)
-        return x, pool_indices, layer_sizes, orig_shape_2d
+        x = self.fc_layers(x)
+        return x, orig_shape_2d

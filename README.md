@@ -28,6 +28,8 @@ This project demonstrates
 - [Ax](https://ax.dev/) for hyperparameter optimization
 - [flake8](https://flake8.pycqa.org/en/latest/) for linting, [black](https://black.readthedocs.io/en/stable/) for formatting, [isort](https://pycqa.github.io/isort/) for import sorting.
 
+Architecture is inspired by [RDenseCNN](https://arxiv.org/pdf/2001.00526.pdf) and [SAM Optimizer](https://arxiv.org/abs/2010.01412).
+
 Side Note: Usually, I use poetry or conda as a package manager. However, the NVIDIA-Docker container comes with an existing environment, that suffers from a `InvalidVersionSpec` error. Conda is also incredible slow in this case, therefore I am using `pip install` to add missing dependencies to the Docker Image. 
 
 ```console
@@ -40,14 +42,14 @@ InvalidVersionSpec: Invalid version '1.10.0+cu113<1.11.0': invalid character(s)
 
 Number of training labels | Accuarcy on validation
 --- | --- 
-500 | 82.22%
-1000 | 83.09%
-2000 | 84.49%
-5000 | 85.22%
-10000 | 87.91%
-20000 | 89.02%
-30000 | 89.48%
-60000 | 91.14%
+1000 | 84.74%
+2000 | 86.25%
+5000 | 89.37%
+7500 | 90.42%
+10000 | 91.03%
+20000 | 91.65%
+30000 | 93.04%
+60000 | 93.56%
 
 The auto-encoder results in a boost of 2-3% over a model which has not been pre-trained on the whole dataset.
 
@@ -78,11 +80,3 @@ python -m eml variational_sigma=0.001 unsupervised_epochs=10 classifier_epochs=1
 ```
 
 More details can be found on the Hydra documentation. All configuration options are described in the [Config.py](eml/Config.py) file.
-
-The hyperparameter tuning is in the [Hyperopt](Hyperopt.ipynb) notebook.
-
-The validation results were generated with the [Evaluation.py](Evaluation.py) script.
-
-```console
-python Evaluation.py
-```
